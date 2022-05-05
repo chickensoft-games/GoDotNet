@@ -22,11 +22,25 @@ namespace GoDotNet {
     /// </summary>
     /// <param name="message">Message to output.</param>
     void Print(string message);
+
+    /// <summary>
+    /// Displays a stack trace in a convenient format.
+    /// </summary>
+    /// <param name="stackTrace">Stack trace to output.</param>
+    void Print(StackTrace stackTrace);
+
+    /// <summary>
+    /// Prints an exception.
+    /// </summary>
+    /// <param name="e">Exception to print.</param>
+    void Print(Exception e);
+
     /// <summary>
     /// Adds a warning message to the log.
     /// </summary>
     /// <param name="message">Message to output.</param>
     void Warn(string message);
+
     /// <summary>
     /// Adds an error message to the log.
     /// </summary>
@@ -70,11 +84,5 @@ namespace GoDotNet {
     /// <typeparam name="T">Return value of the function to invoke.</typeparam>
     /// <returns>Whatever the call returned, or the fallback value.</returns>
     T Always<T>(Func<T> call, T fallback);
-
-    /// <summary>
-    /// Displays a stack trace in a convenient format.
-    /// </summary>
-    /// <param name="stackTrace">Stack trace to output.</param>
-    void Print(StackTrace stackTrace);
   }
 }

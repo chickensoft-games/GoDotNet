@@ -42,6 +42,12 @@ namespace GoDotNet {
     }
 
     /// <inheritdoc/>
+    public void Print(Exception e) {
+      Error("An error ocurred.");
+      Error(e.ToString());
+    }
+
+    /// <inheritdoc/>
     public void Warn(string message) {
       GD.Print(_prefix + ": " + message);
       GD.PushWarning(_prefix + ": " + message);
@@ -68,7 +74,7 @@ namespace GoDotNet {
       }
       catch (Exception e) {
         onError?.Invoke(e);
-        OutputError(e);
+        Print(e);
         throw;
       }
     }
@@ -79,7 +85,7 @@ namespace GoDotNet {
         call();
       }
       catch (Exception e) {
-        OutputError(e);
+        Print(e);
         onError?.Invoke(e);
         throw;
       }
@@ -95,11 +101,6 @@ namespace GoDotNet {
         Warn(e.ToString());
         return fallback;
       }
-    }
-
-    private void OutputError(Exception e) {
-      Error("An error ocurred.");
-      Error(e.ToString());
     }
   }
 }
