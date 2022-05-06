@@ -122,6 +122,7 @@ To fetch a dependency:
 
 ```csharp
 // Inside a Node subclass:
+[Dependency]
 private MyDependencyType _myDependency => this.DependOn<MyDependencyType>();
 ```
 
@@ -171,16 +172,29 @@ The dependent nodes don't actually care about what their ancestors are — they 
 
 Providing values to nodes further down the tree is based on the idea of scoping dependencies, inspired by [popular systems][provider] in other frameworks that have already demonstrated their usefulness.
 
-To create a node which provides a value to all of its descendant nodes, implement the `IProvider<T>` interface.
+To create a node which provides a value to all of its descendant nodes, you must implement the `IProvider<T>` interface. `IProvider` requires a `Get()` method that returns an instance of the object it provides, and its parent interface, `IProviderNode`, requires you to implement the `OnProvided` event.
 
 ```csharp
 public class MySceneNode : IProvider<MyObject> {
-  private MyObject _object = new MyObject();
+  private MyObject _object = null!;
+
+  public event Action<IProviderNode>? OnProvided;
 
   // IProvider<MyObject> requires us to implement a single method:
   MyObject IProvider<MyObject>.Get() => _object;
+
+  public override void _Ready() {
+    _object = new MyObject();
+    
+    // Notify any dependencies that the values provided are now available.
+    OnProvided?.Invoke(this);
+  }
 }
 ```
+
+Once all of the values are initialized, you must call `OnProvided?.Invoke(this)` to inform any dependencies that the provided values are now available. You should only call the `OnProvided` event after all of the dependencies are non-null.
+
+> `OnProvided` is necessary because `_Ready()` is called on child nodes *before* parent nodes due to [Godot's tree order][godot-tree-order]. If you try to use a dependency in a dependent node's `_Ready()` method, there's no guarantee that it's been created, which results in null exception errors. Since it's often not possible to create dependencies until `_Ready()`, provider nodes are expected to invoke `OnProvided` once all of their provided values are created.
 
 Nodes can provide multiple values just as easily. Below is a slightly more realistic example of a production use-case where the dependencies can't be created until `_Ready()`.
 
@@ -193,23 +207,28 @@ public class MySceneNode : IProvider<MyObject>, IProvider<MyOtherObject> {
 
   private MyOtherObject _otherObject = null!;
 
+  public event Action<IProviderNode>? OnProvided;
+
   MyObject IProvider<MyObject>.Get() => _object;
   MyOtherObject IProvider<MyOtherObject>.Get() => _otherObject;
 
   public override void _Ready() {
     _object = new MyObject(/* ... */);
     _otherObject = new MyOtherObject(/* ... */);
+
+    // Notify any dependencies that the values provided are now available.
+    OnProvided?.Invoke(this);
   }
 }
 ```
 
 Because C# doesn't quite support mixins, and the nature of game engines requires nodes to be subclassed, classes which use dependencies must implement an interface and a single property (which is fairly easy to type).
 
-*The underlying dependency system uses the `Deps` property to store `Dependency<T>` objects which are used to lookup and cache dependencies. You shouldn't ever have to interact with these directly.*
+> The underlying dependency system uses the `Deps` property to store `Dependency<T>` objects which are used to lookup and cache dependencies. You shouldn't ever need to interact with these directly.
 
 ```csharp
 public class MyNodeWhichRequiresADependency : Node, IDependent {
-  // IDependent requires us to implement this one property.
+  // IDependent requires us to implement this property.
   // Don't accidentally implement it like this or you'll break caching!
   //  >> bad: public Dependencies Deps => new();
   public Dependencies Deps { get; } = new();
@@ -217,25 +236,37 @@ public class MyNodeWhichRequiresADependency : Node, IDependent {
   // As long as there's a node which implements IProvider<MyObject> above us,
   // we will alway be able to access this object. Under the hood, this creates
   // a dependency utility object which is stored in the Deps property above.
+  [Dependency]
   private MyObject _object => this.DependOn<MyObject>();
 
   public override void _Ready() {
-    // If we need to access a dependency here that isn't technically initialized
-    // until the parent's _Ready() method (which happens *after* the children
-    // are ready), we can use GoDotNet's scheduler to run a function on the
-    // next frame, similar to how call_deferred works.
+    // Required. This allows the dependency system to call Loaded() when all
+    // of the dependencies this node depends on have been created by their
+    // respective providers.
+    this.Depend();
+
+    // _object might actually be null here if the parent provider doesn't create
+    // it in its constructor. Since many providers won't be creating 
+    // dependencies until their _Ready() is invoked, which happens *after*
+    // child node, we shouldn't reference dependencies in dependent nodes'
+    // _Ready() methods. 
+  }
+
+  public void Loaded() {
+    // This method is called by the dependency system when all of the provided
+    // values we depend on have been finalized by their providers!
     //
-    // The provider example above is a demonstration of this use case.
-    this.Autoload<Scheduler>().NextFrame(
-      () => {
-        // Object will not be null here, since this will run on the next frame
-        // after the parent nodes are guaranteed to have initialized.
-        _object.DoSomething();
-      }
-    )
+    // For this method to be called, you must:
+    //  1) Call `OnProvided?.Invoke(this)` in the providers.
+    //  2) Call `this.Depend()` in the _Ready method of your dependent.
+    //
+    // _object is guaranteed to be initialized here!
+    _object.DoSomething();
   }
 }
 ```
+
+All dependencies must be annotated with the `[Dependency]` attribute.
 
 If you request a dependency from a node and the correct provider is implemented on any of the ancestor nodes, the autoloads will be searched for the correct provider. If one exists, it will be used instead.
 
@@ -444,3 +475,4 @@ private void MyOnChangedHandler(Type1 value1, Type2 value2) {
 [signals]: https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_features.html#c-signals
 [composition-inheritance]: https://en.wikipedia.org/wiki/Composition_over_inheritance
 [export-default-values]: https://github.com/godotengine/godot/issues/37703#issuecomment-877406433
+[godot-tree-order]: https://kidscancode.org/godot_recipes/basics/tree_ready_order/
