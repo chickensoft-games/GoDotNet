@@ -36,13 +36,33 @@ namespace GoDotNet {
       else if (_provider is Dependency<TValue> foundDependency) {
         return foundDependency.Get(node);
       }
-      // Search the node and its ancestors for a provider of the required type.
+      var provider = FindProvider(node);
+      _provider = provider;
+      return provider.Get();
+    }
+
+    /// <summary>
+    /// Returns the cached provider (if there is one) or looks up the provider.
+    /// Looking up the provider will result it in caching it for future use.
+    /// </summary>
+    /// <param name="node">The node who depends on the value.</param>
+    /// <returns>The provider, or throws if it can't be found.</returns>
+    public IProvider<TValue> ResolveProvider(Node node) {
+      if (_provider is IProvider<TValue> foundProvider) {
+        _provider = foundProvider;
+        return foundProvider;
+      }
+      var provider = FindProvider(node);
+      _provider = provider;
+      return provider;
+    }
+
+    private IProvider<TValue> FindProvider(Node node) {
       var parent = node;
       do {
         if (parent == null) { break; }
         if (parent is IProvider<TValue> provider) {
-          _provider = provider;
-          return provider.Get();
+          return provider;
         }
         else if (
           !System.Object.ReferenceEquals(parent, node) &&
@@ -55,8 +75,7 @@ namespace GoDotNet {
           var parentDependency = (
             dependent.Deps[typeof(TValue)] as Dependency<TValue>
           )!;
-          _provider = parentDependency;
-          return parentDependency.Get(node);
+          return parentDependency.FindProvider(node);
         }
         parent = parent.GetParent();
       } while (parent != null);
@@ -64,8 +83,7 @@ namespace GoDotNet {
       // first autoload which might implement IProvider<TValue>.
       var autoloadProvider = node.TryAutoload<IProvider<TValue>>();
       if (autoloadProvider != null) {
-        _provider = autoloadProvider;
-        return autoloadProvider.Get();
+        return autoloadProvider;
       }
       throw new Exception($"No provider found for {typeof(TValue)}.");
     }

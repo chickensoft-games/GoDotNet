@@ -1,8 +1,17 @@
 namespace GoDotNet {
+  using System;
+
   /// <summary>
   /// Base type for all provider nodes.
   /// </summary>
-  public interface IProviderNode { }
+  public interface IProviderNode {
+    /// <summary>
+    /// Event that should be emitted by the provider when it has initialized
+    /// all of the dependencies that it provides.
+    /// </summary>
+    public event Action<IProviderNode>? OnProvided;
+  }
+
 
   /// <summary>
   /// Represents a node which provides a value of a specific type to descendent

@@ -88,7 +88,7 @@ namespace GoDotNet {
     /// examines the autoloaded singletons and returns the value from the first
     /// one it finds which implements the correct provider.
     ///
-    /// For nodes to use this, they must implement <see cref="IDependent"/>.
+    /// Nodes must implement <see cref="IDependent"/> to use this.
     ///
     /// This will throw an exception if no provider is found in any of the
     /// node's ancestors or autoloaded singletons.
