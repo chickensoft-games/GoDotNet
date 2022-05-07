@@ -50,12 +50,35 @@ namespace GoDotNet {
     /// <param name="dependent"></param>
 
     public static void Depend(this IDependent dependent) {
+      var iDependentType = typeof(IDependent);
+      var currentType = dependent.GetType();
       if (dependent is Node node) {
+        var properties = new List<PropertyInfo>();
         // Get all properties tagged with the DeppendencyAttribute.
-        var properties = dependent.GetType().GetProperties().Where(
-          propertyInfo
-             => propertyInfo.GetCustomAttribute<DependencyAttribute>() != null
-        ).ToArray();
+        // We also have to search all the superclasses that implement IDependent.
+        while (currentType != null) {
+          if (currentType.GetInterface(nameof(IDependent)) != null) {
+            // use fasterflect to grab properties with attribute
+            var typeProps = currentType.GetProperties(
+              BindingFlags.Instance |
+              BindingFlags.Public |
+              BindingFlags.NonPublic
+            ).Where(
+              propertyInfo =>
+                propertyInfo.GetCustomAttribute<DependencyAttribute>() != null
+            ).ToList();
+            properties.AddRange(typeProps);
+          }
+          currentType = currentType.BaseType;
+        }
+
+        if (properties.Count < 1) {
+          throw new Exception(
+            $"{currentType?.Name} does not have any dependencies. Make " +
+            "sure dependencies use the [Dependency] attribute and invoke " +
+            "this.DependOn<Value>()."
+          );
+        }
 
         var classType = typeof(DependentX);
         var getProviderMethod = classType.GetMethod(
@@ -63,7 +86,7 @@ namespace GoDotNet {
           BindingFlags.Static | BindingFlags.NonPublic
         );
 
-        var numberOfPropertiesToDependOn = properties.Length;
+        var numberOfPropertiesToDependOn = properties.Count;
         var onDependencyLoaded = (IProviderNode provider) => {
           numberOfPropertiesToDependOn--;
           if (numberOfPropertiesToDependOn == 0) {

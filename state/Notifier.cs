@@ -17,7 +17,7 @@ namespace GoDotNet {
     /// <param name="initialValue">Initial value (should not be null).</param>
     /// <param name="onChanged">Event handler, if any.</param>
     public Notifier(TData initialValue, Changed? onChanged = null) {
-      OnChanged += onChanged;
+      if (onChanged != null) { OnChanged += onChanged; }
       _data = initialValue;
       Announce(default);
     }
