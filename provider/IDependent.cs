@@ -3,6 +3,7 @@ namespace GoDotNet {
   using System.Collections.Generic;
   using System.Linq;
   using System.Reflection;
+  using System.Runtime.CompilerServices;
   using Fasterflect;
   using Godot;
 
@@ -16,18 +17,6 @@ namespace GoDotNet {
   /// </summary>
   public interface IDependent {
     /// <summary>
-    /// A dictionary of dependencies, keyed by dependency type. Dependent nodes
-    /// simply need to implement this as follows:
-    ///
-    /// <code>public Dependencies Deps { get; } = new();</code>
-    ///
-    /// This dictionary of dependencies is automatically managed by the
-    /// dependency system.
-    /// </summary>
-    /// <value></value>
-    public Dependencies Deps { get; }
-
-    /// <summary>
     /// Method that is called when all of the node's dependencies are available
     /// from the providers that it depends on.
     ///
@@ -39,6 +28,21 @@ namespace GoDotNet {
   }
 
   public static class DependentX {
+    private static readonly ConditionalWeakTable<IDependent, Dependencies>
+      _deps = new();
+
+    private static Dependencies GetState(IDependent dependent) =>
+      _deps.GetOrCreateValue(dependent);
+
+    private static void SetState(IDependent dependent, Dependencies deps) =>
+      _deps.Add(dependent, deps);
+
+    public static Dependencies GetDeps(this IDependent dependent) =>
+      GetState(dependent);
+
+    public static void SetDeps(this IDependent dependent, Dependencies deps) =>
+      SetState(dependent, deps);
+
     /// <summary>
     /// Begins the dependency resolution process for the given node by finding
     /// each provider that it depends on and listening to the provider's
@@ -48,14 +52,18 @@ namespace GoDotNet {
     /// Once providers are looked up, they are cached for future usage.
     /// </summary>
     /// <param name="dependent"></param>
-
     public static void Depend(this IDependent dependent) {
       var iDependentType = typeof(IDependent);
       var currentType = dependent.GetType();
+
+      // Clear dependency cache.
+      dependent.SetDeps(new());
+
       if (dependent is Node node) {
         var properties = new List<PropertyInfo>();
         // Get all properties tagged with the DeppendencyAttribute.
-        // We also have to search all the superclasses that implement IDependent.
+        // We also have to search all the superclasses that implement
+        // IDependent.
         while (currentType != null) {
           if (currentType.GetInterface(nameof(IDependent)) != null) {
             // use fasterflect to grab properties with attribute
@@ -87,11 +95,12 @@ namespace GoDotNet {
         );
 
         var numberOfPropertiesToDependOn = properties.Count;
-        var onDependencyLoaded = (IProviderNode provider) => {
+        void onDependencyLoaded(IProviderNode provider) {
           numberOfPropertiesToDependOn--;
           if (numberOfPropertiesToDependOn == 0) {
             dependent.Loaded();
           }
+          provider.StopListening(onDependencyLoaded);
         };
 
         foreach (var property in properties) {
@@ -107,7 +116,12 @@ namespace GoDotNet {
           );
 
           if (providerObj is IProviderNode provider) {
-            provider.OnProvided += onDependencyLoaded;
+            if (provider.HasProvided()) {
+              onDependencyLoaded(provider);
+            }
+            else {
+              provider.Listen(onDependencyLoaded);
+            }
           }
           else {
             throw new Exception("Unexpected provider type.");
@@ -122,8 +136,8 @@ namespace GoDotNet {
 
     private static IProvider<T> GetProvider<T>(Node node) {
       if (node is IDependent dependent) {
-        if (dependent.Deps.ContainsKey(typeof(T))) {
-          if (dependent.Deps[typeof(T)] is Dependency<T> dependency) {
+        if (dependent.GetDeps().ContainsKey(typeof(T))) {
+          if (dependent.GetDeps()[typeof(T)] is Dependency<T> dependency) {
             return dependency.ResolveProvider(node);
           }
           else {
@@ -132,7 +146,7 @@ namespace GoDotNet {
         }
         else {
           var dependency = new Dependency<T>();
-          dependent.Deps.Add(typeof(T), dependency);
+          dependent.GetDeps().Add(typeof(T), dependency);
           return dependency.ResolveProvider(node);
         }
       }

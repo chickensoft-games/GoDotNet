@@ -58,6 +58,7 @@ namespace GoDotNet {
     }
 
     private IProvider<TValue> FindProvider(Node node) {
+      // TODO: Start with node.parent, change do-while to while.
       var parent = node;
       do {
         if (parent == null) { break; }
@@ -67,13 +68,13 @@ namespace GoDotNet {
         else if (
           !System.Object.ReferenceEquals(parent, node) &&
           parent is IDependent dependent &&
-          dependent.Deps.ContainsKey(typeof(TValue))
+          dependent.GetDeps().ContainsKey(typeof(TValue))
         ) {
           // Parent is a dependent which depends on the same type of value.
           // Instead of walking all the way back up to the provider, we can
           // just borrow the dependency from the parent.
           var parentDependency = (
-            dependent.Deps[typeof(TValue)] as Dependency<TValue>
+            dependent.GetDeps()[typeof(TValue)] as Dependency<TValue>
           )!;
           return parentDependency.FindProvider(node);
         }

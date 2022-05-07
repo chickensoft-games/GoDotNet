@@ -172,13 +172,11 @@ The dependent nodes don't actually care about what their ancestors are — they 
 
 Providing values to nodes further down the tree is based on the idea of scoping dependencies, inspired by [popular systems][provider] in other frameworks that have already demonstrated their usefulness.
 
-To create a node which provides a value to all of its descendant nodes, you must implement the `IProvider<T>` interface. `IProvider` requires a `Get()` method that returns an instance of the object it provides, and its parent interface, `IProviderNode`, requires you to implement the `OnProvided` event.
+To create a node which provides a value to all of its descendant nodes, you must implement the `IProvider<T>` interface. `IProvider` requires a `Get()` method that returns an instance of the object it provides. `IProvider` also requires you to implement `IProviderNode`, which includes the `Provided()` method that you must call after all of the values you intend to provide have been initialized. Calling this allows dependent nodes to be informed when their dependency values are available for use.
 
 ```csharp
 public class MySceneNode : IProvider<MyObject> {
   private MyObject _object = null!;
-
-  public event Action<IProviderNode>? OnProvided;
 
   // IProvider<MyObject> requires us to implement a single method:
   MyObject IProvider<MyObject>.Get() => _object;
@@ -187,14 +185,14 @@ public class MySceneNode : IProvider<MyObject> {
     _object = new MyObject();
     
     // Notify any dependencies that the values provided are now available.
-    OnProvided?.Invoke(this);
+    this.Provided();
   }
 }
 ```
 
 Once all of the values are initialized, you must call `OnProvided?.Invoke(this)` to inform any dependencies that the provided values are now available. You should only call the `OnProvided` event after all of the dependencies are non-null.
 
-> `OnProvided` is necessary because `_Ready()` is called on child nodes *before* parent nodes due to [Godot's tree order][godot-tree-order]. If you try to use a dependency in a dependent node's `_Ready()` method, there's no guarantee that it's been created, which results in null exception errors. Since it's often not possible to create dependencies until `_Ready()`, provider nodes are expected to invoke `OnProvided` once all of their provided values are created.
+> `this.Provided` is necessary because `_Ready()` is called on child nodes *before* parent nodes due to [Godot's tree order][godot-tree-order]. If you try to use a dependency in a dependent node's `_Ready()` method, there's no guarantee that it's been created, which results in null exception errors. Since it's often not possible to create dependencies until `_Ready()`, provider nodes are expected to invoke `this.Provided()` once all of their provided values are created.
 
 Nodes can provide multiple values just as easily. Below is a slightly more realistic example of a production use-case where the dependencies can't be created until `_Ready()`.
 
@@ -207,8 +205,6 @@ public class MySceneNode : IProvider<MyObject>, IProvider<MyOtherObject> {
 
   private MyOtherObject _otherObject = null!;
 
-  public event Action<IProviderNode>? OnProvided;
-
   MyObject IProvider<MyObject>.Get() => _object;
   MyOtherObject IProvider<MyOtherObject>.Get() => _otherObject;
 
@@ -217,25 +213,17 @@ public class MySceneNode : IProvider<MyObject>, IProvider<MyOtherObject> {
     _otherObject = new MyOtherObject(/* ... */);
 
     // Notify any dependencies that the values provided are now available.
-    OnProvided?.Invoke(this);
+    this.Provided();
   }
 }
 ```
 
-Because C# doesn't quite support mixins, and the nature of game engines requires nodes to be subclassed, classes which use dependencies must implement an interface and a single property (which is fairly easy to type).
-
-> The underlying dependency system uses the `Deps` property to store `Dependency<T>` objects which are used to lookup and cache dependencies. You shouldn't ever need to interact with these directly.
+To use dependencies, a node must implement `IDependent` and call `this.Depend()` in `_Ready()`. Once the underlying dependency resolution system determines that all of the dependencies are available from the provider node ancestors, the dependent node's `Loaded()` method will be called. In `Loaded()`, dependent nodes are guaranteed to be able to access their dependency values.
 
 ```csharp
 public class MyNodeWhichRequiresADependency : Node, IDependent {
-  // IDependent requires us to implement this property.
-  // Don't accidentally implement it like this or you'll break caching!
-  //  >> bad: public Dependencies Deps => new();
-  public Dependencies Deps { get; } = new();
-
   // As long as there's a node which implements IProvider<MyObject> above us,
-  // we will alway be able to access this object. Under the hood, this creates
-  // a dependency utility object which is stored in the Deps property above.
+  // we will be able to access this object once `Loaded()` is called.
   [Dependency]
   private MyObject _object => this.DependOn<MyObject>();
 
@@ -274,15 +262,14 @@ If you request a dependency from a node and the correct provider is implemented 
 
 Like all dependency injection systems, there are a few corner cases you should be aware of.
 
-If a node is removed from the tree and inserted somewhere else in the tree, it may not be able to find the correct provider. The underlying dependency will  continue to use the previous provider if it has cached the value previously, so you can clear the dependency cache when a node re-enters the tree to prevent the dependency resolution from entering an invalid state.
+If a node is removed from the tree and inserted somewhere else in the tree, it may not be able to find the correct provider. The underlying dependency system
+will continue to use the previous provider it has cached. To prevent invalid
+states, you should clear the dependency cache and recreate it when a node re-enters the tree. This can be accomplished by simply calling `this.Depend()` again from the dependent node, which will call `Loaded()` again.
 
 ```csharp
-// Make sure Deps has a setter if you'll be re-parenting the node.
-public Dependencies Deps { get; set; } = new();
-
 public override void _EnterTree() {
   // Reset dependency cache to avoid problems.
-  Deps = new();
+  this.Depend();
 }
 ```
 
