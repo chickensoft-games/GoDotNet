@@ -40,7 +40,7 @@ namespace GoDotNet {
 
     private static void SetState(
       IProviderNode node, ProviderState state
-    ) => _providerStates.Add(node, state);
+    ) => _providerStates.AddOrUpdate(node, state);
 
     /// <summary>
     /// Providers should call this when all of their provided values have been

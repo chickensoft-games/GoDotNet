@@ -35,7 +35,7 @@ namespace GoDotNet {
       _deps.GetOrCreateValue(dependent);
 
     private static void SetState(IDependent dependent, Dependencies deps) =>
-      _deps.Add(dependent, deps);
+      _deps.AddOrUpdate(dependent, deps);
 
     public static Dependencies GetDeps(this IDependent dependent) =>
       GetState(dependent);
