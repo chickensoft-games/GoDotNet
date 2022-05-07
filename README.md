@@ -138,12 +138,12 @@ using GoDotNet;
 public class GameScheduler : Scheduler { }
 ```
 
-Add it to the `project.godot` file (preferably the first entry):
+Add it to your `project.godot` file (preferably the first entry):
 
 ```ini
 [autoload]
 
-GameScheduler="*res://wherever_autoloads_are/GameScheduler.cs"
+GameScheduler="*res://autoload_folder/GameScheduler.cs"
 ```
 
 ...and simply schedule a callback to run on the next frame:
@@ -156,26 +156,33 @@ this.Autoload<Scheduler>().NextFrame(
 
 ### Dependency Injection
 
-GoDotNet provides a simple dependency injection system which allows dependencies to be provided to child nodes, looked-up, cached, and read on demand. By `dependency`, we mean "any value or instance a node instance might need to perform its job." Oftentimes, dependencies are simply instances of custom classes (or other nodes) which perform game logic.
+GoDotNet provides a simple dependency injection system which allows dependencies to be provided to child nodes, looked-up, cached, and read on demand. By "dependency", we simply mean "any value or instance a node might need to perform its job." Oftentimes, dependencies are simply instances of custom classes which perform game logic.
 
 #### Why have a dependency system?
 
-Why are dependencies helpful? Typically, providing values to nodes requires parent nodes to pass values to children nodes via method calls, following the ["call down, signal upwards"][call-down-signal-up] architecture rule. This creates a tight coupling between the parent and the child since the parent has to know which children need which values. If a distant descendant node of the parent also needs the same value, the parent's children have to pass it down until it reaches the correct descendent, too.
+Why are dependency injection systems helpful? In Godot, providing values to descendent nodes typically requires parent nodes to pass values to children nodes via method calls, following the ["call down, signal upwards"][call-down-signal-up] architecture rule. This creates a tight coupling between the parent and the child since the parent has to know which children need which values.
 
-All of that requires a *lot* of boilerplate code and can result in unnecessary scripts being added to nodes which otherwise might not even need scripts. Additionally, doing all that work doesn't even guarantee that the descendants will have the most up-to-date value of the thing they need (unless you take care to create such a system).
+If a distant descendant node of the parent also needs the same value, the parent's children have to pass it down until it reaches the correct descendent, too. Not only is it an awful lot of typing to create all those methods which just pass an object to a child node, it makes the code harder to follow as you may have to trace the dependency through many different files. All of this reinforces tight coupling, too, which is exactly what a good dependency injection system should prevent.
 
-GoDotNet's dependency system solves this by letting nodes indicate they provide values by implementing an interface, and letting the descendent nodes that need those values look for nodes above them that provide the values they need.
+Finally, doing all that work doesn't even guarantee that the descendants will have the most up-to-date value or instance of the thing they need.
 
-The dependent nodes don't actually care about what their ancestors are — they just search for the closest node above them that can provide the value they need, ensuring loose coupling.
+GoDotNet's dependency system solves this by letting nodes indicate they provide values by implementing an interface, and letting the descendent nodes that need those values look for nodes above them that provide the values they need. GoDotNet takes care of all the work of caching dependency providers and announcing when dependencies are ready to be used under the hood.
+
+Dependent nodes don't need to know what kind of ancestor nodes they have — they just search for the closest node above them that can provide the value they need, ensuring loose coupling in both directions.
 
 #### Providing and Fetching Dependencies
 
 Providing values to nodes further down the tree is based on the idea of scoping dependencies, inspired by [popular systems][provider] in other frameworks that have already demonstrated their usefulness.
 
-To create a node which provides a value to all of its descendant nodes, you must implement the `IProvider<T>` interface. `IProvider` requires a `Get()` method that returns an instance of the object it provides. `IProvider` also requires you to implement `IProviderNode`, which includes the `Provided()` method that you must call after all of the values you intend to provide have been initialized. Calling this allows dependent nodes to be informed when their dependency values are available for use.
+To create a node which provides a value to all of its descendant nodes, you must implement the `IProvider<T>` interface.
+
+`IProvider` requires a single `Get()` method that returns an instance of the object it provides.
 
 ```csharp
 public class MySceneNode : IProvider<MyObject> {
+  // If this object has to be created in _Ready(), we can use `null!` since we
+  // know the value will be valid after _Ready is called. This is as close as we
+  // can get to the `late` modifier in Dart or `lateinit` in Kotlin.
   private MyObject _object = null!;
 
   // IProvider<MyObject> requires us to implement a single method:
@@ -190,17 +197,19 @@ public class MySceneNode : IProvider<MyObject> {
 }
 ```
 
-Once all of the values are initialized, you must call `OnProvided?.Invoke(this)` to inform any dependencies that the provided values are now available. You should only call the `OnProvided` event after all of the dependencies are non-null.
+Once all of the values are initialized, the provider node must call `this.Provided()` to inform any dependencies that the provided values are now available. Any dependencies already in existence in the subtree will have their `Loaded()` methods called, allowing them to perform initialization with the now-available dependencies.
+
+Providers should only call `this.Provided()` after all of the values provided are non-null.
+
+Dependent nodes that are added after the provider node has initialized their dependencies will have their `Loaded()` method called right away.
+
 
 > `this.Provided` is necessary because `_Ready()` is called on child nodes *before* parent nodes due to [Godot's tree order][godot-tree-order]. If you try to use a dependency in a dependent node's `_Ready()` method, there's no guarantee that it's been created, which results in null exception errors. Since it's often not possible to create dependencies until `_Ready()`, provider nodes are expected to invoke `this.Provided()` once all of their provided values are created.
 
-Nodes can provide multiple values just as easily. Below is a slightly more realistic example of a production use-case where the dependencies can't be created until `_Ready()`.
+Nodes can provide multiple values just as easily.
 
 ```csharp
 public class MySceneNode : IProvider<MyObject>, IProvider<MyOtherObject> {
-  // If this object has to be created on _Ready(), we can use `null!` since we
-  // know the value will be present from thereon out. This is equivalent to
-  // the `late` modifier in Dart or `lateinit` in Kotlin.
   private MyObject _object = null!;
 
   private MyOtherObject _otherObject = null!;
@@ -218,35 +227,52 @@ public class MySceneNode : IProvider<MyObject>, IProvider<MyOtherObject> {
 }
 ```
 
-To use dependencies, a node must implement `IDependent` and call `this.Depend()` in `_Ready()`. Once the underlying dependency resolution system determines that all of the dependencies are available from the provider node ancestors, the dependent node's `Loaded()` method will be called. In `Loaded()`, dependent nodes are guaranteed to be able to access their dependency values.
+To use dependencies, a node must implement `IDependent` and call `this.Depend()` at the end of the `_Ready()` method.
+
+Dependent nodes declare dependencies by creating a property with the `[Dependency] attribute and calling the node extension method `this.DependOn` with the type of value they are depending on.
 
 ```csharp
-public class MyNodeWhichRequiresADependency : Node, IDependent {
+[Dependency]
+private ObjectA _a => this.DependOn<ObjectA>();
+
+[Dependency]
+private ObjectB _b => this.DependOn<ObjectB>();
+```
+
+The `IDependent` interface requires you to implement a single void method, `Loaded()`, which is called once all the values the node depends on have been initialized by their providers. For `Loaded()` to be called, you must call `this.Depend()` in your dependent node's `_Ready()` method.
+
+```csharp
+public void Loaded() {
+  // _a and _b are guaranteed to be non-null here.
+  _a.DoSomething();
+  _b.DoSomething();
+}
+```
+
+> Internally, `this.Depend()` will look up all of the properties of your node which have a `[Dependency]` attribute and cache their providers for future access. If a provider hasn't initialized a dependency, hooks will be registered which call your dependent node's `Loaded()` method once all the dependencies are available. 
+
+ In `Loaded()`, dependent nodes are guaranteed to be able to access their dependency values. Below is a complete example.
+
+```csharp
+public class DependentNode : Node, IDependent {
   // As long as there's a node which implements IProvider<MyObject> above us,
   // we will be able to access this object once `Loaded()` is called.
   [Dependency]
   private MyObject _object => this.DependOn<MyObject>();
 
   public override void _Ready() {
-    // Required. This allows the dependency system to call Loaded() when all
-    // of the dependencies this node depends on have been created by their
-    // respective providers.
-    this.Depend();
-
     // _object might actually be null here if the parent provider doesn't create
     // it in its constructor. Since many providers won't be creating 
     // dependencies until their _Ready() is invoked, which happens *after*
     // child node, we shouldn't reference dependencies in dependent nodes'
-    // _Ready() methods. 
+    // _Ready() methods.
+
+    this.Depend();
   }
 
   public void Loaded() {
     // This method is called by the dependency system when all of the provided
     // values we depend on have been finalized by their providers!
-    //
-    // For this method to be called, you must:
-    //  1) Call `OnProvided?.Invoke(this)` in the providers.
-    //  2) Call `this.Depend()` in the _Ready method of your dependent.
     //
     // _object is guaranteed to be initialized here!
     _object.DoSomething();
@@ -254,27 +280,17 @@ public class MyNodeWhichRequiresADependency : Node, IDependent {
 }
 ```
 
-All dependencies must be annotated with the `[Dependency]` attribute.
-
-If you request a dependency from a node and the correct provider is implemented on any of the ancestor nodes, the autoloads will be searched for the correct provider. If one exists, it will be used instead.
+*Note*: If the dependency system can't find the correct provider in a dependent node's ancestors, it will search all of the autoloads for an autoload which implements the correct provider type. This allows you to "fallback" to global providers (should you want to).
 
 #### Caveats
 
 Like all dependency injection systems, there are a few corner cases you should be aware of.
 
-If a node is removed from the tree and inserted somewhere else in the tree, it may not be able to find the correct provider. The underlying dependency system
-will continue to use the previous provider it has cached. To prevent invalid
-states, you should clear the dependency cache and recreate it when a node re-enters the tree. This can be accomplished by simply calling `this.Depend()` again from the dependent node, which will call `Loaded()` again.
+If a node is removed from the tree and inserted somewhere else in the tree, it might try to use a cached version of the wrong provider. To prevent invalid
+situations like this, you should clear the dependency cache and recreate it when a node re-enters the tree. This can be accomplished by simply calling `this.Depend()` again from the dependent node, which will call `Loaded()` again.
 
-```csharp
-public override void _EnterTree() {
-  // Reset dependency cache to avoid problems.
-  this.Depend();
-}
-```
+By placing provider nodes above all the possible parents of a node which depends on that value, you can ensure that a node will always be able to find the dependency it requests. Clever provider hierarchies will prevent most of these headaches.
 
- By placing provider nodes above all the possible parents of a node which depends on that value, you can ensure that a node will always be able to find the dependency it requests. Clever provider hierarchies will prevent most of these headaches.
- 
 ### State Machines
 
 GoDotNet provides a simple state machine implementation that emits a C# event when the state changes (since [Godot signals are more fragile](#signals-and-events)). If you try to update the machine to a state that isn't a valid transition from the current state, it throws an exception. The machine requires that an initial state be given when the machine is constructed to avoid nullability issues.
