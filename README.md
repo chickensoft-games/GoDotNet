@@ -354,7 +354,7 @@ public class GameManager : Node {
 
 ### Notifiers
 
-A notifier is an object which emits a signal when its value changes. Notifiers are similar to state machines, but they don't care about transitions. Any update that changes the value (determined by comparing the new value with the previous value using `Object.Equals`) will emit a signal.
+A notifier is an object which emits a signal when its value changes. Notifiers are similar to state machines, but they don't care about transitions. Any update that changes the value (determined by comparing the new value with the previous value using `Object.Equals`) will emit a signal. It's often convenient to use record types as the value of a Notifier. Like state machines, the value of a notifier can never be `null` — make sure you initialize with a valid value!
 
 Because notifiers check equality to determine changes, they are convenient to use with value types (like primitives and structs). Notifiers, like state machines, also emit a signal to announce their value as soon as they are constructed.
 
@@ -366,6 +366,69 @@ private void OnPlayerNameChanged(string name) {
   _log.Print($"Player name changed to $name");
 }
 ```
+
+Like state machines, notifiers should typically be kept private. Instead of letting consumers modify the value directly, you can create a manager class which provides methods that mutate the notifier value. These manager classes can provide an event which redirects to the notifier event, or they can emit their own events when certain pieces of the notifier value changes.
+
+```csharp
+public record EnemyData(string Name, int Health);
+
+public class EnemyManager {
+  private readonly Notifier<EnemyData> _notifier;
+
+  public event Notifier<EnemyData>.Changed OnChanged {
+    add => _notifier.OnChanged += value;
+    remove => _notifier.OnChanged -= value;
+  }
+
+  public EnemyData Value => _notifier.Value;
+
+  public EnemyManager(string name, int health) => _notifier = new(
+    new EnemyData(name, health)
+  );
+
+  public void UpdateName(string name) =>
+    _notifier.Value = _notifier.Value with { Name = name };
+
+  public void UpdateHealth(int health) =>
+    _notifier.Value = _notifier.Value with { Health = health };
+}
+```
+
+The class above shows an enemy manager which manages a single enemy's state and emits an `OnChanged` event whenever any part of the enemy's state changes. You can easily modify it to emit more specific events when certain pieces of the enemy state changes.
+
+```csharp
+public class EnemyManager {
+  private readonly Notifier<EnemyData> _notifier;
+
+  public EnemyData Value => _notifier.Value;
+
+  public event Action<string>? OnNameChanged;
+  public event Action<int>? OnHealthChanged;
+
+  public EnemyManager(string name, int health) => _notifier = new(
+    new EnemyData(name, health),
+    OnChanged
+  );
+
+  public void UpdateName(string name) =>
+    _notifier.Value = _notifier.Value with { Name = name };
+
+  public void UpdateHealth(int health) =>
+    _notifier.Value = _notifier.Value with { Health = health };
+
+  private void OnChanged(EnemyData enemy, EnemyData? previous) {
+    // Emit different events depending on what changed.
+    if (!System.Object.Equals(enemy.Name, previous?.Name)) {
+      OnNameChanged?.Invoke(enemy.Name);
+    }
+    else if (!System.Object.Equals(enemy.Health, previous?.Health)) {
+      OnHealthChanged?.Invoke(enemy.Health);
+    }
+  }
+}
+```
+
+By providing manager classes which wrap state machines or notifiers to dependent nodes, you can create nodes which easily respond to changes in the values provided by distant ancestor nodes.
 
 ### Serialization of Godot Objects
 

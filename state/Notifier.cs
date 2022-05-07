@@ -11,6 +11,15 @@ namespace GoDotNet {
     private TData _data;
 
     /// <summary>
+    /// Signature of the event handler for when the value changes. The notifier
+    /// and the previous event are passed in as arguments to make comparing
+    /// state changes simpler.
+    /// </summary>
+    /// <param name="current">The new value.</param>
+    /// <param name="previous">The previous value.</param>
+    public delegate void Changed(TData current, TData? previous);
+
+    /// <summary>
     /// Creates a new notifier with the given initial value and optional
     /// event handler.
     /// </summary>
@@ -21,15 +30,6 @@ namespace GoDotNet {
       _data = initialValue;
       Announce(default);
     }
-
-    /// <summary>
-    /// Signature of the event handler for when the value changes. The notifier
-    /// and the previous event are passed in as arguments to make comparing
-    /// state changes simpler.
-    /// </summary>
-    /// <param name="current">The new value.</param>
-    /// <param name="previous">The previous value.</param>
-    public delegate void Changed(TData current, TData? previous);
 
     /// <summary>
     /// Event emitted when the current notifier value has changed.
