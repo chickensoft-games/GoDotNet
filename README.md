@@ -8,7 +8,11 @@ While developing a game, we couldn't find any C# solutions to solve problems lik
 
 If you've used C# with Godot, you have probably realized it is a tricky environment to work in. GoDotNet aims to make all of that a lot easier.
 
-## Requirements
+## Installation
+
+To install, copy all of the files in this repository into your game's `addons/` folder (e.g., `addons/go_dot_net`).
+
+### Requirements
 
 You must specify C# 9, the correct target framework, and null-safety in your `*.csproj` file.
 
