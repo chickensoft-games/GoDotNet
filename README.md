@@ -8,7 +8,7 @@ While developing a game, we couldn't find any C# solutions to solve problems lik
 
 If you've used C# with Godot, you have probably realized it is a tricky environment to work in. GoDotNet aims to make all of that a lot easier.
 
-### Requirements
+## Requirements
 
 You must specify C# 9, the correct target framework, and null-safety in your `*.csproj` file.
 
@@ -39,7 +39,7 @@ GoDotNet depends on a few other projects, which you can easily include in your g
 </ItemGroup>
 ```
 
-### Logging
+## Logging
 
 GoDotNet provides a logging interface and a default implementation to make outputting to the console convenient in a debugging environment. For production environments, just make a different implementation that outputs to a log file (or does nothing).
 
@@ -82,10 +82,10 @@ var result = _log.Always<T>(
 _log.Print(new StackTrace());
 ```
 
-### Extensions
+## Extensions
 
 GoDotNet provides a number of extensions on common Godot objects.
-#### Godot Collections ↔️ Dotnet Collections
+### Godot Collections ↔️ Dotnet Collections
 
 A Godot Dictionary or Array can be converted to a .NET collection easily in `O(n)` time. Certain [bugs][godot-dictionary-iterable-issue] in Godot's collection types necessitate the need for converting back-and-forth occasionally. For performance reasons, try to avoid doing this often on large collections.
 
@@ -96,9 +96,9 @@ var array = new Array().ToDotNet();
 var dictionary = new Dictionary<KeyType, ValueType>().ToDotNet();
 ```
 
-#### Node Utilities
+### Node Utilities
 
-##### Autoloads
+#### Autoloads
 
 An autoload can be fetched from any node:
 
@@ -112,7 +112,7 @@ public class MyEntity : Node {
 }
 ```
 
-##### Dependencies
+#### Dependencies
 
 Nodes can indicate that they require a certain type of value to be provided to them by any ancestor node above them in the scene tree.
 
@@ -126,7 +126,7 @@ To fetch a dependency:
 private MyDependencyType _myDependency => this.DependOn<MyDependencyType>();
 ```
 
-### Scheduling
+## Scheduling
 
 A `Scheduler` node is included which allows callbacks to be run on the next frame, similar to [CallDeferred][call-deferred]. Unlike `CallDeferred`, the scheduler uses vanilla C# to avoid marshalling types to Godot. Since Godot cannot marshal objects that don't extend `Godot.Object`/`Godot.Reference`, this utility is provided to perform the same function for records, custom types, and C# collections which otherwise couldn't be marshaled between C# and Godot.
 
@@ -154,11 +154,11 @@ this.Autoload<Scheduler>().NextFrame(
 )
 ```
 
-### Dependency Injection
+## Dependency Injection
 
 GoDotNet provides a simple dependency injection system which allows dependencies to be provided to child nodes, looked-up, cached, and read on demand. By "dependency", we simply mean "any value or instance a node might need to perform its job." Oftentimes, dependencies are simply instances of custom classes which perform game logic.
 
-#### Why have a dependency system?
+### Why have a dependency system?
 
 Why are dependency injection systems helpful? In Godot, providing values to descendent nodes typically requires parent nodes to pass values to children nodes via method calls, following the ["call down, signal upwards"][call-down-signal-up] architecture rule. This creates a tight coupling between the parent and the child since the parent has to know which children need which values.
 
@@ -170,7 +170,7 @@ GoDotNet's dependency system solves this by letting nodes indicate they provide 
 
 Dependent nodes don't need to know what kind of ancestor nodes they have — they just search for the closest node above them that can provide the value they need, ensuring loose coupling in both directions.
 
-#### Providing and Fetching Dependencies
+### Providing and Fetching Dependencies
 
 Providing values to nodes further down the tree is based on the idea of scoping dependencies, inspired by [popular systems][provider] in other frameworks that have already demonstrated their usefulness.
 
@@ -282,7 +282,7 @@ public class DependentNode : Node, IDependent {
 
 *Note*: If the dependency system can't find the correct provider in a dependent node's ancestors, it will search all of the autoloads for an autoload which implements the correct provider type. This allows you to "fallback" to global providers (should you want to).
 
-#### Caveats
+### Caveats
 
 Like all dependency injection systems, there are a few corner cases you should be aware of.
 
@@ -291,7 +291,7 @@ situations like this, you should clear the dependency cache and recreate it when
 
 By placing provider nodes above all the possible parents of a node which depends on that value, you can ensure that a node will always be able to find the dependency it requests. Clever provider hierarchies will prevent most of these headaches.
 
-### State Machines
+## State Machines
 
 GoDotNet provides a simple state machine implementation that emits a C# event when the state changes (since [Godot signals are more fragile](#signals-and-events)). If you try to update the machine to a state that isn't a valid transition from the current state, it throws an exception. The machine requires that an initial state be given when the machine is constructed to avoid nullability issues.
 
@@ -355,7 +355,7 @@ public class GameManager : Node {
 }
 ```
 
-### Notifiers
+## Notifiers
 
 A notifier is an object which emits a signal when its value changes. Notifiers are similar to state machines, but they don't care about transitions. Any update that changes the value (determined by comparing the new value with the previous value using `Object.Equals`) will emit a signal. It's often convenient to use record types as the value of a Notifier. Like state machines, the value of a notifier can never be `null` — make sure you initialize with a valid value!
 
@@ -433,7 +433,7 @@ public class EnemyManager {
 
 By providing manager classes which wrap state machines or notifiers to dependent nodes, you can create nodes which easily respond to changes in the values provided by distant ancestor nodes.
 
-### Serialization of Godot Objects
+## Serialization of Godot Objects
 
 GoDotNet provides a `GDObject` which extends `Godot.Reference` (which is itself a `Godot.Object`). Because it is a `Godot.Object`, `GDObject` can be marshalled back and forth between Godot's C++ layer without any issue, provided each of its fields is also a type that Godot supports.
 
@@ -479,9 +479,9 @@ Dictionary<string, string> stringData = GDObject.ToStringData(bob);
 MyObject bobAgain = GDObject.FromStringData(stringData);
 ```
 
-### Technical Challenges
+## Technical Challenges
 
-#### Signals and Events
+### Signals and Events
 
 Godot supports emitting [signals] from C#. Because Godot signals pass through the Godot engine, any arguments given to the signal must be marshalled through Godot, forcing them to be classes which extend `Godot.Object`/`Godot.Reference` (structs aren't allowed). Likewise, all the fields in the class must also be the same kind of types so they can be marshalled, and so on.
 
