@@ -16,9 +16,9 @@ To install, copy all of the files in this repository into your game's `addons/` 
 
 You must specify C# `10.0`, `netstandard2.1` and null-safety in your `*.csproj` file.
 
-*If you're adding this to an existing project, you may face a considerable migration effort to make everything null safe.*
-
-Use `netstandard2.1` instead of `net5.0` for the target framework (since there are [some issues][net-5-0] with `net5.0`).
+> If you're adding this to an existing project, you may face a considerable migration effort to make everything null-aware. GoDotNet will likely benefit a new project, but not necessarily a well-established project using older C# targets. Use whatever works best for you.
+>
+> Using `netstandard2.1` instead of `net5.0` prevents [some issues][net-5-0] with `net5.0`.
 
 
 ```xml
