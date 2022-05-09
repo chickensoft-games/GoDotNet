@@ -14,7 +14,7 @@ To install, copy all of the files in this repository into your game's `addons/` 
 
 ### Requirements
 
-You must specify C# 9, the correct target framework, and null-safety in your `*.csproj` file.
+You must specify C# `10.0`, `netstandard2.1` and null-safety in your `*.csproj` file.
 
 *If you're adding this to an existing project, you may face a considerable migration effort to make everything null safe.*
 
