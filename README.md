@@ -487,7 +487,7 @@ MyObject bobAgain = GDObject.FromStringData(stringData);
 
 ### Signals and Events
 
-Godot supports emitting [signals] from C#. Because Godot signals pass through the Godot engine, any arguments given to the signal must be marshalled through Godot, forcing them to be classes which extend `Godot.Object`/`Godot.Reference` (structs aren't allowed). Likewise, all the fields in the class must also be the same kind of types so they can be marshalled, and so on.
+Godot supports emitting [signals] from C#. Because Godot signals pass through the Godot engine, any arguments given to the signal must be marshalled through Godot, forcing them to be classes which extend `Godot.Object`/`Godot.Reference` (records aren't allowed). Likewise, all the fields in the class must also be the same kind of types so they can be marshalled, and so on.
 
 It's not possible to have static typing with signal parameters, so you don't find out until runtime if you accidentally passed the wrong parameter. The closest you can do is the following, which wouldn't break at compile time if the receiving function signature happened to be wrong.
 
