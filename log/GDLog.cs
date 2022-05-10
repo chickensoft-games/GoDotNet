@@ -1,6 +1,7 @@
 namespace GoDotNet {
   using System;
   using System.Diagnostics;
+  using System.Runtime.CompilerServices;
   using Godot;
 
   /// <summary>
@@ -27,9 +28,11 @@ namespace GoDotNet {
     public GDLog(string prefix) => _prefix = prefix;
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Print(string message) => GD.Print(_prefix + ": " + message);
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Print(StackTrace stackTrace) {
       foreach (var frame in stackTrace.GetFrames()) {
         var fileName = frame.GetFileName() ?? "**";
@@ -42,24 +45,28 @@ namespace GoDotNet {
     }
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Print(Exception e) {
       Error("An error ocurred.");
       Error(e.ToString());
     }
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Warn(string message) {
       GD.Print(_prefix + ": " + message);
       GD.PushWarning(_prefix + ": " + message);
     }
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Error(string message) {
       GD.Print(_prefix + ": " + message);
       GD.PushError(_prefix + ": " + message);
     }
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Assert(bool condition, string message) {
       if (!condition) {
         Error(message);
@@ -68,6 +75,7 @@ namespace GoDotNet {
     }
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T Run<T>(Func<T> call, Action<Exception>? onError = null) {
       try {
         return call();
@@ -80,6 +88,7 @@ namespace GoDotNet {
     }
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Run(Action call, Action<Exception>? onError = null) {
       try {
         call();
@@ -92,6 +101,7 @@ namespace GoDotNet {
     }
 
     /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T Always<T>(Func<T> call, T fallback) {
       try {
         return call();
