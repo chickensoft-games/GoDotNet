@@ -1,5 +1,7 @@
 # GoDotNet
 
+[![Discord](https://img.shields.io/badge/Chickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white)](https://discord.gg/gSjaPgMmYW)
+
 > Simple dependency injection, state management, serialization, and other utilities for C# Godot development.
 
 GoDotNet is a library of code which (hopefully) makes using C# in Godot a little bit less painful.
