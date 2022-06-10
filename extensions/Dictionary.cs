@@ -19,12 +19,12 @@ namespace GoDotNet {
     /// </typeparam>
     /// <returns>A dotnet dictionary containing the Godot dictionary
     /// contents.</returns>
-    public static Dictionary<TKey, TValue?> ToDotNet<TKey, TValue>(
-      this Godot.Collections.Dictionary<TKey, TValue?> dictionary
+    public static Dictionary<TKey, TValue> ToDotNet<TKey, TValue>(
+      this Godot.Collections.Dictionary<TKey, TValue> dictionary
     ) where TKey : notnull {
       var keys = dictionary.Keys.ToList();
       var values = dictionary.Values.ToList();
-      var result = new Dictionary<TKey, TValue?>();
+      var result = new Dictionary<TKey, TValue>();
       for (var i = 0; i < keys.Count; i++) {
         var key = keys[i];
         if (key is null) {
