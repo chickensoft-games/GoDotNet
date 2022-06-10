@@ -19,28 +19,28 @@ namespace GoDotNet {
     /// </typeparam>
     /// <returns>A dotnet dictionary containing the Godot dictionary
     /// contents.</returns>
-    public static Dictionary<TKey, TValue> ToDotNet<TKey, TValue>(
-      this Godot.Collections.Dictionary<TKey, TValue> dictionary
-    ) {
+    public static Dictionary<TKey, TValue?> ToDotNet<TKey, TValue>(
+      this Godot.Collections.Dictionary<TKey, TValue?> dictionary
+    ) where TKey : notnull {
       var keys = dictionary.Keys.ToList();
       var values = dictionary.Values.ToList();
-      var result = new Dictionary<TKey, TValue>();
+      var result = new Dictionary<TKey, TValue?>();
       for (var i = 0; i < keys.Count; i++) {
         var key = keys[i];
-        if (key is not not null) {
-          throw new Exception(
+        if (key is null) {
+          throw new InvalidOperationException(
             $"Dictionary contains a key of type {key?.GetType()} " +
             $"but expected type {typeof(TKey)}"
           );
         }
-        var value = values[i];
-        if (value is not not null) {
-          throw new Exception(
+        dynamic? value = values[i];
+        if (value is not TValue) {
+          throw new InvalidOperationException(
             $"Dictionary contains a value of type {value?.GetType()} " +
             $"but expected type {typeof(TValue)}"
           );
         }
-        result.Add(keys[i], values[i]);
+        result.Add(key, value);
       }
       return result;
     }
