@@ -29,5 +29,21 @@ namespace GoDotNet {
       }
       return list;
     }
+
+    public static List<T?> ToDotNet<T>(
+      this Godot.Collections.Array<T?> array
+    ) {
+      var list = new List<T?>(array.Count);
+      foreach (dynamic? item in array) {
+        if (item is not T and not null) {
+          throw new Exception(
+            $"Array contains an item of type {item?.GetType()} " +
+            $"but expected type {typeof(T)}"
+          );
+        }
+        list.Add((T?)item);
+      }
+      return list;
+    }
   }
 }
