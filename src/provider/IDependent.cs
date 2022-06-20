@@ -61,7 +61,7 @@ namespace GoDotNet {
 
       if (dependent is Node node) {
         var properties = new List<PropertyInfo>();
-        // Get all properties tagged with the DeppendencyAttribute.
+        // Get all properties tagged with the DependencyAttribute.
         // We also have to search all the superclasses that implement
         // IDependent.
         while (currentType != null) {
