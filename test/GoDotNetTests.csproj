@@ -1,0 +1,27 @@
+<Project Sdk="Godot.NET.Sdk/3.3.0">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="fasterflect" Version="3.0.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Chickensoft.GoDotLog" Version="0.0.5" />
+    <PackageReference Include="Chickensoft.GoDotCollections" Version="0.0.3" />
+    <PackageReference Include="Chickensoft.GoDotTest" Version="0.0.4" />
+
+    <PackageReference Include="Shouldly" Version="4.0.3" />
+    <PackageReference Include="Moq" Version="4.17.2" />
+
+    <!-- Include GoDotNet files directly -->
+    <!-- https://stackoverflow.com/a/35477501 -->
+    <Compile Include="..\src\**\*.cs">
+      <Link>go_dot_test</Link>
+    </Compile>
+  </ItemGroup>
+</Project>

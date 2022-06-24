@@ -3,12 +3,19 @@
     "autoload",
     "autoloaded",
     "autoloads",
+    "branchcoverage",
     "cref",
     "Deps",
     "Fasterflect",
     "inheritdoc",
+    "lcov",
+    "linecoverage",
     "Newtonsoft",
     "notnull",
+    "reportgenerator",
+    "reporttypes",
+    "targetargs",
+    "targetdir",
     "typeparam"
   ]
 }
