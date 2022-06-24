@@ -14,6 +14,7 @@
     "notnull",
     "reportgenerator",
     "reporttypes",
+    "Shouldly",
     "targetargs",
     "targetdir",
     "typeparam"
