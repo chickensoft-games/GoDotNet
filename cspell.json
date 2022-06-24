@@ -8,6 +8,7 @@
     "Fasterflect",
     "inheritdoc",
     "Newtonsoft",
+    "notnull",
     "typeparam"
   ]
 }

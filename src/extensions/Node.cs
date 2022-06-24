@@ -4,6 +4,7 @@ namespace GoDotNet {
   using System.Runtime.ExceptionServices;
   using System.Threading.Tasks;
   using Godot;
+  using GoDotLog;
 
   /// <summary>
   /// A collection of extension methods for Godot nodes.

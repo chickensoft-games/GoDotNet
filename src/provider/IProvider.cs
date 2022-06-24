@@ -2,6 +2,9 @@ namespace GoDotNet {
   using System;
   using System.Runtime.CompilerServices;
 
+  /// <summary>
+  /// Provider state.
+  /// </summary>
   public class ProviderState {
     /// <summary>
     /// True if the provider has provided all of its values.
@@ -23,6 +26,9 @@ namespace GoDotNet {
       => OnProvided?.Invoke(provider);
   }
 
+  /// <summary>
+  /// Base interface for all providers.
+  /// </summary>
   public interface IProviderNode { }
 
   /// <summary>
@@ -59,13 +65,31 @@ namespace GoDotNet {
       state.Announce(provider);
     }
 
+    /// <summary>
+    /// Checks to see if the provider has finished providing dependencies to
+    /// nodes lower in the tree.
+    /// </summary>
+    /// <param name="provider">Receiver provider node.</param>
+    /// <returns>True if the receiver has provided values.</returns>
     public static bool HasProvided(this IProviderNode provider)
       => GetState(provider).HasProvided;
 
+    /// <summary>
+    /// Subscribes the given action to the receiver's `OnProvided` event.
+    /// </summary>
+    /// <param name="provider">Receiver provider node.</param>
+    /// <param name="onProvided">Action to perform when the receiver has
+    /// finished providing values.</param>
     public static void Listen(
       this IProviderNode provider, Action<IProviderNode>? onProvided
     ) => GetState(provider).OnProvided += onProvided;
 
+    /// <summary>
+    /// Unsubscribes the given action from the receiver's `OnProvided` event.
+    /// </summary>
+    /// <param name="provider">Receiver provider node.</param>
+    /// <param name="onProvided">Action to perform when the receiver has
+    /// finished providing values.</param>
     public static void StopListening(
       this IProviderNode provider, Action<IProviderNode>? onProvided
     ) => GetState(provider).OnProvided -= onProvided;

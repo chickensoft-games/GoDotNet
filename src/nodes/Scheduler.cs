@@ -3,6 +3,7 @@ namespace GoDotNet {
   using System.Collections.Generic;
   using System.Diagnostics;
   using Godot;
+  using GoDotLog;
 
   /// <summary>
   /// The scheduler helps queue up callbacks and run them at the desired time.
@@ -14,6 +15,7 @@ namespace GoDotNet {
     private bool _isDebugging = false;
 
     private readonly ILog _log = new GDLog(nameof(Scheduler));
+    /// <inheritdoc/>
 
     public override void _Ready() => _isDebugging = OS.IsDebugBuild();
 

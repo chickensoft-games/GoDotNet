@@ -30,6 +30,13 @@ namespace GoDotNet {
       return list;
     }
 
+    /// <summary>
+    /// Converts a Godot array into a C# list. Runs in O(n), so try not to use
+    /// on huge values.
+    /// </summary>
+    /// <param name="array">Godot array (receiver).</param>
+    /// <typeparam name="T">Type of the items in the array.</typeparam>
+    /// <returns>A dotnet list containing the Godot array contents.</returns>
     public static List<T?> ToDotNet<T>(
       this Godot.Collections.Array<T?> array
     ) {

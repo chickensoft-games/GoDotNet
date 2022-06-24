@@ -33,6 +33,7 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="fasterflect" Version="3.0.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Chickensoft.GoDotLog" Version="0.0.5" />
     <PackageReference Include="Chickensoft.GoDotCollections" Version="0.0.3" />
     <!-- Required for inheritdoc -->
