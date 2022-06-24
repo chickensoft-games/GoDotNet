@@ -8,13 +8,13 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
-    <Title>GoDotDep</Title>
+    <Title>GoDotNet</Title>
     <Description>Node-based dependency injection, state management, and extensions for C# and Godot.</Description>
     <Copyright>© 2022 Chickensoft Games</Copyright>
     <Company>Chickensoft</Company>
 
-    <PackageId>Chickensoft.GoDotDep</PackageId>
-    <PackageVersion>0.0.4</PackageVersion>
+    <PackageId>Chickensoft.GoDotNet</PackageId>
+    <PackageVersion>0.0.1</PackageVersion>
     <PackageReleaseNotes>GoDotNet release.</PackageReleaseNotes>
     <PackageIcon></PackageIcon>
     <PackageTags>Godot;Dependency;Dependencies;DI;Dependency Injection;Loader;State Machine;Deterministic;Finite;FSM;Extensions;Notifier;Listener;Observable;Injector;Runner;Chickensoft;Gamedev;Utility;Utilities</PackageTags>
