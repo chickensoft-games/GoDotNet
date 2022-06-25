@@ -32,11 +32,15 @@ jobs:
           dotnet tool install --global coverlet.console
 
       - name: Restore And Build Project
-        run: dotnet restore && dotnet build
+        run: |
+          dotnet restore
+          godot project.godot --build-solutions --quit
 
       - name: Restore And Build Test Project
         working-directory: test
-        run: dotnet restore && dotnet build
+        run: |
+          dotnet restore
+          godot project.godot --build-solutions --quit
 
       - name: Run Tests
         working-directory: test
