@@ -19,6 +19,15 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          # Install dotnet tool: https://github.com/abarichello/godot-ci/issues/80#issue-1161313394
+          wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          dpkg -i packages-microsoft-prod.deb
+          rm packages-microsoft-prod.deb
+          apt-get update -qq
+          apt-get install -y apt-transport-https
+          apt-get update -qq
+          apt-get install -y dotnet-sdk-6.0
+
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global coverlet.console
 
