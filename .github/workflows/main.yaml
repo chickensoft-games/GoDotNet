@@ -45,7 +45,7 @@ jobs:
       - name: Run Tests
         working-directory: test
         run: |
-          function convertGlobsToExclusionFlags() {
+          function convertGlobsToExclusionFlags {
             # Script receives a single string argument containing a string of coverage
             # exclusion globs separated by the delimiter below, such as
             # "**/addons/**/*.cs:**/scenes/my_excluded_scene/**/*.cs"
@@ -64,12 +64,10 @@ jobs:
             echo "$OUTPUT"
           }
 
-          echo "hello"
-
-          # coverlet .mono/temp/bin/Debug/ --target "godot" --targetargs \
-          #   "--run-tests --quit-on-finish" --format "lcov" \
-          #   --output ./coverage/coverage.info \
-          #   "$(convertGlobsToExclusionFlags "$EXCLUSIONS")"
+          coverlet .mono/temp/bin/Debug/ --target "godot" --targetargs \
+            "--run-tests --quit-on-finish" --format "lcov" \
+            --output ./coverage/coverage.info \
+            "$(convertGlobsToExclusionFlags "$EXCLUSIONS")"
 
       - name: Generate Coverage Report
         working-directory: test
