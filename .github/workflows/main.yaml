@@ -64,10 +64,12 @@ jobs:
             echo "$OUTPUT"
           }
 
-          coverlet .mono/temp/bin/Debug/ --target "godot" --targetargs \
-            "--run-tests --quit-on-finish" --format "lcov" \
-            --output ./coverage/coverage.info \
-            "$(convertGlobsToExclusionFlags "$EXCLUSIONS")"
+          echo "hello"
+
+          # coverlet .mono/temp/bin/Debug/ --target "godot" --targetargs \
+          #   "--run-tests --quit-on-finish" --format "lcov" \
+          #   --output ./coverage/coverage.info \
+          #   "$(convertGlobsToExclusionFlags "$EXCLUSIONS")"
 
       - name: Generate Coverage Report
         working-directory: test
