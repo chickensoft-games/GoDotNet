@@ -1,0 +1,101 @@
+name: GoDotTest
+on: [pull_request, push]
+
+jobs:
+  test:
+    outputs:
+      branch-coverage: ${{ steps.branch-coverage.outputs.BRANCH_COVERAGE }}
+      line-coverage: ${{ steps.branch-coverage.outputs.LINE_COVERAGE }}
+    env:
+      MIN_LINE_COVERAGE: 100.0
+      MIN_BRANCH_COVERAGE: 100.0
+      EXCLUSIONS: "**/addons/**/*.cs:**/test/**/*.cs"
+      GLOB_DELIMITER: ":"
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:mono-3.4.4
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Dependencies
+      - run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          dotnet tool install --global coverlet.console
+
+      - name: Restore And Build Project
+        run: dotnet restore && dotnet build
+
+      - name: Restore And Build Test Project
+        working-directory: test
+        run: dotnet restore && dotnet build
+
+      - name: Run Tests
+        working-directory: test
+        run: |
+          function convertGlobsToExclusionFlags() {
+            # Script receives a single string argument containing a string of coverage
+            # exclusion globs separated by the delimiter below, such as
+            # "**/addons/**/*.cs:**/scenes/my_excluded_scene/**/*.cs"
+            #
+            # The script will convert them to exclusion flags for coverlet, seen below:
+            # --exclude-by-file "**/addons/**/*.cs" --exclude-by-file "**/scenes/my_excluded_scene/**/*.cs"
+            N=1
+            SPLIT=$(cut -d "$GLOB_DELIMITER" -f $N <<< "$1")
+            OUTPUT=""
+            while [ -n "$SPLIT" ]
+            do
+              OUTPUT="$OUTPUT--exclude-by-file \"$SPLIT\" "
+              N=$((N+1))
+              SPLIT=$(cut -d "$GLOB_DELIMITER" -f $N <<< "$1")
+            done
+            echo "$OUTPUT"
+          }
+
+          coverlet .mono/temp/bin/Debug/ --target $GODOT --targetargs \
+            "--run-tests --quit-on-finish" --format "lcov" \
+            --output ./coverage/coverage.info \
+            "$(convertGlobsToExclusionFlags "$EXCLUSIONS")"
+
+      - name: Generate Coverage Report
+        working-directory: test
+        run: |
+          reportgenerator -reports:"./coverage/coverage.info" \
+            -targetdir:"./coverage/report" -reporttypes:JsonSummary
+
+      - name: Get Line Coverage %
+        id: line-coverage
+        working-directory: test
+        run: |
+          LINE_COVERAGE=$(cat ./coverage/report/Summary.json | \
+            perl -wnE'say for /"linecoverage": (.*),/g')
+          echo "::set-output name=LINE_COVERAGE::$LINE_COVERAGE"
+
+      - name: Get Branch Coverage %
+        working-directory: test
+        id: branch-coverage
+        run: |
+          BRANCH_COVERAGE=$(cat ./coverage/report/Summary.json | \
+            perl -wnE'say for /"branchcoverage": (.*),/g' | head -n 1)
+          echo "::set-output name=BRANCH_COVERAGE::$BRANCH_COVERAGE"
+
+      - name: Fail Build if Coverage is Below Threshold
+        working-directory: test
+        run: |
+          # Use the basic calculator (bc) tool to ensure that we've reached the given
+          # minimum line and branch coverage percentages.
+
+          if [ $(echo "$LINE_COVERAGE < $MIN_LINE_COVERAGE" | bc -l) -eq "1" ]; then
+            echo "Line coverage of $LINE_COVERAGE% is below threshold of $MIN_LINE_COVERAGE%."
+            exit 1
+          fi
+
+          echo "Line coverage satisfactory."
+
+          if [ $(echo "$BRANCH_COVERAGE < $MIN_BRANCH_COVERAGE" | bc -l) -eq "1" ]; then
+            echo "Branch coverage of $BRANCH_COVERAGE% is below threshold of $MIN_BRANCH_COVERAGE%."
+            exit 1
+          fi
+
+          echo "Branch coverage satisfactory."
+
+
