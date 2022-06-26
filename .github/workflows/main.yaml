@@ -93,9 +93,6 @@ jobs:
           # Use the basic calculator (bc) tool to ensure that we've reached the given
           # minimum line and branch coverage percentages.
 
-          echo "Looking for bc..."
-          echo $(which bc)
-
           if [ $(echo "$LINE_COVERAGE < $MIN_LINE_COVERAGE" | bc -l) -eq "1" ]; then
             echo "Line coverage of $LINE_COVERAGE% is below threshold of $MIN_LINE_COVERAGE%."
             exit 1
