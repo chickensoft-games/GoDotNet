@@ -71,7 +71,7 @@ jobs:
       - name: Generate Coverage Report
         working-directory: test
         run: |
-          reportgenerator -reports:"./coverage/coverage.info" \
+          ~/.dotnet/tools/reportgenerator -reports:"./coverage/coverage.info" \
             -targetdir:"./coverage/report" -reporttypes:JsonSummary
 
       - name: Get Line Coverage %
