@@ -45,33 +45,29 @@ jobs:
         working-directory: test
         run: |
           GLOB_DELIMITER=:
-          function convertGlobsToExclusionFlags() {
-            # Script receives a single string argument containing a string of coverage
-            # exclusion globs separated by the delimiter below, such as
-            # "**/addons/**/*.cs:**/scenes/my_excluded_scene/**/*.cs"
-            #
-            # The script will convert them to exclusion flags for coverlet, seen below:
-            # --exclude-by-file "**/addons/**/*.cs" --exclude-by-file "**/scenes/my_excluded_scene/**/*.cs"
-            N=1
-            NUM_SPLITS=$(echo "$1" | grep -o "$GLOB_DELIMITER" | wc -l)
-            NUM_SPLITS=$((NUM_SPLITS+1))
-            NUM_SPLITS="${NUM_SPLITS##*( )}"
+          # Script receives a single string argument containing a string of coverage
+          # exclusion globs separated by the delimiter below, such as
+          # "**/addons/**/*.cs:**/scenes/my_excluded_scene/**/*.cs"
+          #
+          # The script will convert them to exclusion flags for coverlet, seen below:
+          # --exclude-by-file "**/addons/**/*.cs" --exclude-by-file "**/scenes/my_excluded_scene/**/*.cs"
+          N=1
+          NUM_SPLITS=$(echo "$1" | grep -o "$GLOB_DELIMITER" | wc -l)
+          NUM_SPLITS=$((NUM_SPLITS+1))
+          NUM_SPLITS="${NUM_SPLITS##*( )}"
 
+          SPLIT=$(echo "$1" | cut -d "$GLOB_DELIMITER" -f $N)
+          EXCLUSIONS=""
+          while [ -n "$SPLIT" ] && [ $N -le $NUM_SPLITS ]
+          do
+            EXCLUSIONS="$EXCLUSIONS--exclude-by-file \"$SPLIT\" "
+            N=$((N+1))
             SPLIT=$(echo "$1" | cut -d "$GLOB_DELIMITER" -f $N)
-            OUTPUT=""
-            while [ -n "$SPLIT" ] && [ $N -le $NUM_SPLITS ]
-            do
-              OUTPUT="$OUTPUT--exclude-by-file \"$SPLIT\" "
-              N=$((N+1))
-              SPLIT=$(echo "$1" | cut -d "$GLOB_DELIMITER" -f $N)
-            done
-            echo "$OUTPUT"
-          }
+          done
 
           coverlet .mono/temp/bin/Debug/ --target "godot" --targetargs \
             "--run-tests --quit-on-finish" --format "lcov" \
-            --output ./coverage/coverage.info \
-            "$(convertGlobsToExclusionFlags "$EXCLUSIONS")"
+            --output ./coverage/coverage.info "$EXCLUSIONS"
 
       - name: Generate Coverage Report
         working-directory: test
