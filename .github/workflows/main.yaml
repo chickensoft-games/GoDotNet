@@ -29,7 +29,6 @@ jobs:
 
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global coverlet.console
-          dotnet tool update --global coverlet.console
 
       - name: Restore And Build Project
         run: |
@@ -66,7 +65,7 @@ jobs:
             SPLIT=$(echo "$1" | cut -d "$GLOB_DELIMITER" -f $N)
           done
 
-          coverlet .mono/temp/bin/Debug/ --target "godot" --targetargs \
+          ~/.dotnet/tools/coverlet .mono/temp/bin/Debug/ --target "godot" --targetargs \
             "--run-tests --quit-on-finish" --format "lcov" \
             --output ./coverage/coverage.info "$EXCLUSIONS"
 
