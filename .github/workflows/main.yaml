@@ -31,7 +31,7 @@ jobs:
           dotnet tool install --global coverlet.console
 
           # bc (basic calculator) doesn't come standard on Ubuntu?
-          apt-get install -Y bc
+          apt-get --assume-yes install bc
 
       - name: Restore And Build Project
         run: |
