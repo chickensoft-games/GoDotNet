@@ -77,8 +77,7 @@ jobs:
           ~/.dotnet/tools/reportgenerator -reports:"./coverage/coverage.info" \
             -targetdir:"./coverage/report" -reporttypes:JsonSummary
 
-      - name: Get Line Coverage %
-        id: line-coverage
+      - name: Check Test Coverage
         working-directory: test
         run: |
           LINE_COVERAGE=$(cat ./coverage/report/Summary.json | \
@@ -86,18 +85,11 @@ jobs:
           echo "::set-output name=LINE_COVERAGE::$LINE_COVERAGE"
           echo "LINE_COVERAGE=$LINE_COVERAGE"
 
-      - name: Get Branch Coverage %
-        working-directory: test
-        id: branch-coverage
-        run: |
           BRANCH_COVERAGE=$(cat ./coverage/report/Summary.json | \
             perl -wnE'say for /"branchcoverage": (.*),/g' | head -n 1)
           echo "::set-output name=BRANCH_COVERAGE::$BRANCH_COVERAGE"
           echo "BRANCH_COVERAGE=$BRANCH_COVERAGE"
 
-      - name: Fail Build if Coverage is Below Threshold
-        working-directory: test
-        run: |
           # Use the basic calculator (bc) tool to ensure that we've reached the given
           # minimum line and branch coverage percentages.
 
