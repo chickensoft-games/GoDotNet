@@ -65,9 +65,8 @@ jobs:
             SPLIT=$(echo "$1" | cut -d "$GLOB_DELIMITER" -f $N)
           done
 
-          ~/.dotnet/tools/coverlet .mono/temp/bin/Debug/ --target "godot" --targetargs \
-            "--run-tests --quit-on-finish" --format "lcov" \
-            --output ./coverage/coverage.info "$EXCLUSIONS"
+          COMMAND="~/.dotnet/tools/coverlet .mono/temp/bin/Debug/ --target $(which godot) --targetargs \"--run-tests --quit-on-finish\" --format \"lcov\" --output ./coverage/coverage.info $EXCLUSIONS"
+          eval "$COMMAND"
 
       - name: Generate Coverage Report
         working-directory: test
