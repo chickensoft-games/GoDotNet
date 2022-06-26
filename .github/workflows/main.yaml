@@ -84,6 +84,7 @@ jobs:
           LINE_COVERAGE=$(cat ./coverage/report/Summary.json | \
             perl -wnE'say for /"linecoverage": (.*),/g')
           echo "::set-output name=LINE_COVERAGE::$LINE_COVERAGE"
+          echo "LINE_COVERAGE=$LINE_COVERAGE"
 
       - name: Get Branch Coverage %
         working-directory: test
@@ -92,12 +93,16 @@ jobs:
           BRANCH_COVERAGE=$(cat ./coverage/report/Summary.json | \
             perl -wnE'say for /"branchcoverage": (.*),/g' | head -n 1)
           echo "::set-output name=BRANCH_COVERAGE::$BRANCH_COVERAGE"
+          echo "BRANCH_COVERAGE=$BRANCH_COVERAGE"
 
       - name: Fail Build if Coverage is Below Threshold
         working-directory: test
         run: |
           # Use the basic calculator (bc) tool to ensure that we've reached the given
           # minimum line and branch coverage percentages.
+
+          echo "Looking for bc..."
+          echo $(which bc)
 
           if [ $(echo "$LINE_COVERAGE < $MIN_LINE_COVERAGE" | bc -l) -eq "1" ]; then
             echo "Line coverage of $LINE_COVERAGE% is below threshold of $MIN_LINE_COVERAGE%."
