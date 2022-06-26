@@ -29,6 +29,7 @@ jobs:
 
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global coverlet.console
+          dotnet tool update --global coverlet.console
 
       - name: Restore And Build Project
         run: |
