@@ -10,7 +10,6 @@ jobs:
       MIN_LINE_COVERAGE: 100.0
       MIN_BRANCH_COVERAGE: 100.0
       EXCLUSIONS: "**/addons/**/*.cs:**/test/**/*.cs"
-      GLOB_DELIMITER: ":"
     runs-on: ubuntu-latest
     container:
       image: barichello/godot-ci:mono-3.4.4
@@ -45,7 +44,8 @@ jobs:
       - name: Run Tests
         working-directory: test
         run: |
-          function convertGlobsToExclusionFlags {
+          GLOB_DELIMITER=:
+          function convertGlobsToExclusionFlags() {
             # Script receives a single string argument containing a string of coverage
             # exclusion globs separated by the delimiter below, such as
             # "**/addons/**/*.cs:**/scenes/my_excluded_scene/**/*.cs"
@@ -53,13 +53,17 @@ jobs:
             # The script will convert them to exclusion flags for coverlet, seen below:
             # --exclude-by-file "**/addons/**/*.cs" --exclude-by-file "**/scenes/my_excluded_scene/**/*.cs"
             N=1
-            SPLIT=$(cut -d "$GLOB_DELIMITER" -f $N <<< "$1")
+            NUM_SPLITS=$(echo "$1" | grep -o "$GLOB_DELIMITER" | wc -l)
+            NUM_SPLITS=$((NUM_SPLITS+1))
+            NUM_SPLITS="${NUM_SPLITS##*( )}"
+
+            SPLIT=$(echo "$1" | cut -d "$GLOB_DELIMITER" -f $N)
             OUTPUT=""
-            while [ -n "$SPLIT" ]
+            while [ -n "$SPLIT" ] && [ $N -le $NUM_SPLITS ]
             do
               OUTPUT="$OUTPUT--exclude-by-file \"$SPLIT\" "
               N=$((N+1))
-              SPLIT=$(cut -d "$GLOB_DELIMITER" -f $N <<< "$1")
+              SPLIT=$(echo "$1" | cut -d "$GLOB_DELIMITER" -f $N)
             done
             echo "$OUTPUT"
           }
