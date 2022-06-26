@@ -30,6 +30,9 @@ jobs:
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global coverlet.console
 
+          # bc (basic calculator) doesn't come standard on Ubuntu?
+          apt-get install bc
+
       - name: Restore And Build Project
         run: |
           dotnet restore
