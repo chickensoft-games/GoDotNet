@@ -28,7 +28,7 @@ namespace GoDotNet {
     /// trying to resolve the provider.
     /// </summary>
     /// <param name="node">The node who depends on the value.</param>
-    /// <returns>The value dependend upon.</returns>
+    /// <returns>The value depended upon.</returns>
     public object? Get(Node node) {
       if (_provider is IProvider<TValue> foundProvider) {
         return foundProvider.Get();

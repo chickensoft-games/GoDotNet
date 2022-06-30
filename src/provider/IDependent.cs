@@ -27,6 +27,10 @@ namespace GoDotNet {
     public void Loaded();
   }
 
+  /// <summary>
+  /// Extension class which allows nodes to call `this.Depend()` from `_Ready`.
+  /// Handles internal dependency loading logic.
+  /// </summary>
   public static class DependentX {
     private static readonly ConditionalWeakTable<IDependent, Dependencies>
       _deps = new();
@@ -37,11 +41,16 @@ namespace GoDotNet {
     private static void SetState(IDependent dependent, Dependencies deps) =>
       _deps.AddOrUpdate(dependent, deps);
 
+    private static void SetDeps(this IDependent dependent, Dependencies deps) =>
+      SetState(dependent, deps);
+
+    /// <summary>
+    /// Returns the dependencies of the receiver node.
+    /// </summary>
+    /// <param name="dependent">Receiver node.</param>
+    /// <returns>Dictionary of dependencies, keyed by type.</returns>
     public static Dependencies GetDeps(this IDependent dependent) =>
       GetState(dependent);
-
-    public static void SetDeps(this IDependent dependent, Dependencies deps) =>
-      SetState(dependent, deps);
 
     /// <summary>
     /// Begins the dependency resolution process for the given node by finding
@@ -61,7 +70,7 @@ namespace GoDotNet {
 
       if (dependent is Node node) {
         var properties = new List<PropertyInfo>();
-        // Get all properties tagged with the DeppendencyAttribute.
+        // Get all properties tagged with the DependencyAttribute.
         // We also have to search all the superclasses that implement
         // IDependent.
         while (currentType != null) {

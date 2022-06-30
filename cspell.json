@@ -1,0 +1,22 @@
+{
+  "words": [
+    "autoload",
+    "autoloaded",
+    "autoloads",
+    "branchcoverage",
+    "cref",
+    "Deps",
+    "Fasterflect",
+    "inheritdoc",
+    "lcov",
+    "linecoverage",
+    "Newtonsoft",
+    "notnull",
+    "reportgenerator",
+    "reporttypes",
+    "Shouldly",
+    "targetargs",
+    "targetdir",
+    "typeparam"
+  ]
+}

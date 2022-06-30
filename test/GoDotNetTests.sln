@@ -1,0 +1,19 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoDotNetTests", "GoDotNetTests.csproj", "{DEB416B0-926E-4A28-8924-1737D701D4C5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+	Debug|Any CPU = Debug|Any CPU
+	ExportDebug|Any CPU = ExportDebug|Any CPU
+	ExportRelease|Any CPU = ExportRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DEB416B0-926E-4A28-8924-1737D701D4C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEB416B0-926E-4A28-8924-1737D701D4C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEB416B0-926E-4A28-8924-1737D701D4C5}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{DEB416B0-926E-4A28-8924-1737D701D4C5}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
+		{DEB416B0-926E-4A28-8924-1737D701D4C5}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{DEB416B0-926E-4A28-8924-1737D701D4C5}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+	EndGlobalSection
+EndGlobal
