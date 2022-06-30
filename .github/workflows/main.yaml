@@ -7,8 +7,8 @@ jobs:
       branch-coverage: ${{ steps.branch-coverage.outputs.BRANCH_COVERAGE }}
       line-coverage: ${{ steps.branch-coverage.outputs.LINE_COVERAGE }}
     env:
-      MIN_LINE_COVERAGE: 0.0
-      MIN_BRANCH_COVERAGE: 0.0
+      MIN_LINE_COVERAGE: 10.0
+      MIN_BRANCH_COVERAGE: 10.0
       EXCLUSIONS: "**/addons/**/*.cs:**/test/**/*.cs"
     runs-on: ubuntu-latest
     container:
