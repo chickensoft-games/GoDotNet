@@ -6,87 +6,23 @@
 
 GoDotNet is a library of code which (hopefully) makes using C# in Godot a little bit less painful.
 
-While developing a game, we couldn't find any C# solutions to solve problems like dependency injection and simple state management. So, we built our own mechanisms (heavily inspired by other frameworks). It's now time to share this with the wider Godot community, since we will probably never finish our game anyway 🤷‍♀️.
+While developing a game, we couldn't find any simple C# solutions to solve problems like dependency injection, basic serialization of Godot objects, and state machines. So, we built our own mechanisms (heavily inspired by other frameworks). It's now time to share this with the wider Godot community, since we will probably never finish our game anyway 🤷‍♀️.
 
-If you've used C# with Godot, you have probably realized it is a tricky environment to work in. GoDotNet aims to make all of that a lot easier.
+GoDotNet is itself written in C# 10 for `netstandard2.1` (the highest language version currently supported by Godot). If you want to setup your project the same way, look no further than the [`GoDotNet.csproj`](GoDotNet.csproj) file for inspiration!
 
 ## Installation
 
-To install, copy all of the files in this repository into your game's `addons/` folder (e.g., `addons/go_dot_net`).
+Find the latest version of [GoDotNet][go_dot_net_nuget] on nuget.
 
-### Requirements
-
-You must specify C# `10.0`, `netstandard2.1` and null-safety in your `*.csproj` file.
-
-> If you're adding this to an existing project, you may face a considerable migration effort to make everything null-aware. GoDotNet will likely benefit a new project, but not necessarily a well-established project using older C# targets. Use whatever works best for you.
->
-> Using `netstandard2.1` instead of `net5.0` prevents [some issues][net-5-0] with `net5.0`.
-
+In your `*.csproj`, add the following snippet in your `<ItemGroup>`, save, and run `dotnet restore`. Make sure to replace `*VERSION*` with the latest version.
 
 ```xml
-<PropertyGroup>
-  <TargetFramework>netstandard2.1</TargetFramework>
-  <LangVersion>9.0</LangVersion>
-  <Nullable>enable</Nullable>
-  <RootNamespace>YourProjectNamespace</RootNamespace>
-</PropertyGroup>
-```
-
-If you're using Steamworks.NET, you will likely need to add `<PlatformTarget>x64</PlatformTarget>`.
-
-GoDotNet depends on a few other projects, which you can easily include in your game's `*.csproj` file:
-
-```xml
-<ItemGroup>
-  <!-- Required to get certain things to build. -->
-  <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-  <!-- Used to support serialization for GDObjects -->
-  <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-</ItemGroup>
+<PackageReference Include="Chickensoft.GoDotNet" Version="*VERSION*" />
 ```
 
 ## Logging
 
-GoDotNet provides a logging interface and a default implementation to make outputting to the console convenient in a debugging environment. For production environments, just make a different implementation that outputs to a log file (or does nothing).
-
-```csharp
-public class MyEntity {
-  // Create a log which outputs messages prefixed with the name of the class.
-  private ILog _log = new GDLog(nameof(MyClass));
-}
-```
-
-Logs can perform a variety of common actions (and output messages if they fail automatically):
-
-```csharp
-_log.Print("My message");
-
-_log.Warn("My message");
-
-_log.Error("My message");
-
-// Run a potentially unsafe action. Any errors thrown from the action will
-// be output by the log. An optional error handler callback can be provided
-// which will be invoked before the exception is rethrown.
-_log.Run(
-  () => { _log.Print("Potentially unsafe action"); },
-  (e) => {
-    _log.Error("Better clean up after myself...whatever I did failed.");
-  }
-);
-
-// Throw an assertion exception with the given message if the assertion fails.
-_log.Assert(node.Name == "MyNode", "Must be valid node name.");
-
-// Return the value of a function or a fallback value.
-var result = _log.Always<T>(
-  () => new Random().Next(0, 10) > 5 ? "valid value" : null,
-  "fallback value"
-);
-
-// Print a decently formatted stack trace.
-_log.Print(new StackTrace());
-```
+Internally, GoDotNet uses [GoDotLog] for logging. GoDotLog allows you to easily create loggers that output nicely formatted, prefixed messages (in addition to asserts other exception-aware execution utilities).
 
 ## Extensions
 
@@ -210,7 +146,7 @@ Providers should only call `this.Provided()` after all of the values provided ar
 Dependent nodes that are added after the provider node has initialized their dependencies will have their `Loaded()` method called right away.
 
 
-> `this.Provided` is necessary because `_Ready()` is called on child nodes *before* parent nodes due to [Godot's tree order][godot-tree-order]. If you try to use a dependency in a dependent node's `_Ready()` method, there's no guarantee that it's been created, which results in null exception errors. Since it's often not possible to create dependencies until `_Ready()`, provider nodes are expected to invoke `this.Provided()` once all of their provided values are created.
+> `this.Provided()` is necessary because `_Ready()` is called on child nodes *before* parent nodes due to [Godot's tree order][godot-tree-order]. If you try to use a dependency in a dependent node's `_Ready()` method, there's no guarantee that it's been created, which results in null exception errors. Since it's often not possible to create dependencies until `_Ready()`, provider nodes are expected to invoke `this.Provided()` once all of their provided values are created.
 
 Nodes can provide multiple values just as easily.
 
@@ -235,7 +171,7 @@ public class MySceneNode : IProvider<MyObject>, IProvider<MyOtherObject> {
 
 To use dependencies, a node must implement `IDependent` and call `this.Depend()` at the end of the `_Ready()` method.
 
-Dependent nodes declare dependencies by creating a property with the `[Dependency] attribute and calling the node extension method `this.DependOn` with the type of value they are depending on.
+Dependent nodes declare dependencies by creating a property with the `[Dependency]` attribute and calling the node extension method `this.DependOn` with the type of value they are depending on.
 
 ```csharp
 [Dependency]
@@ -288,14 +224,22 @@ public class DependentNode : Node, IDependent {
 
 *Note*: If the dependency system can't find the correct provider in a dependent node's ancestors, it will search all of the autoloads for an autoload which implements the correct provider type. This allows you to "fallback" to global providers (should you want to).
 
-### Caveats
+### Dependency Caveats
 
 Like all dependency injection systems, there are a few corner cases you should be aware of.
+
+#### Removing and Re-adding Nodes
 
 If a node is removed from the tree and inserted somewhere else in the tree, it might try to use a cached version of the wrong provider. To prevent invalid
 situations like this, you should clear the dependency cache and recreate it when a node re-enters the tree. This can be accomplished by simply calling `this.Depend()` again from the dependent node, which will call `Loaded()` again.
 
 By placing provider nodes above all the possible parents of a node which depends on that value, you can ensure that a node will always be able to find the dependency it requests. Clever provider hierarchies will prevent most of these headaches.
+
+#### Dependency Deadlock
+
+If you initialize dependencies in a complex (or slow way) by failing to call `this.Provided()` from your provider's `_Ready()` method, there is a risk of seriously slowing down (or deadlocking) the dependency resolution in the children. `Loaded()` isn't called on child nodes using `this.Depend()` until **all** of the dependencies they depend on from the ancestor nodes have been provided, so `Loaded()` will only be invoked when the slowest dependency has been marked provided via `this.Provided()` in the ancestor provider node.
+
+To avoid this situation entirely, always initialize dependencies in your provider's `_Ready()` method and call `this.Provided()` immediately afterwards.
 
 ## State Machines
 
@@ -303,7 +247,7 @@ GoDotNet provides a simple state machine implementation that emits a C# event wh
 
 State machines are not extensible — instead, GoDotNet almost always prefers the pattern of [composition over inheritance][composition-inheritance]. The state machine relies on state equality to determine if the state has changed to avoid issuing unnecessary events. Using `record` types for the state allows this to happen automatically. 
 
-States used with a state machine must implement IMachineState<T>, where T is just the type of the machine state. Otherwise, the default implementation returns `true` to allow transitions to any state.
+States used with a state machine must implement `IMachineState<T>`, where T is just the type of the machine state. Otherwise, the default implementation returns `true` to allow transitions to any state.
 
 States can optionally implement `CanTransitionTo(IMachineState state)` to determine if the proposed state transition is valid.
 
@@ -474,7 +418,7 @@ To serialize and deserialize a `GDObject` to and from a dictionary, respectively
 ```csharp
 var alice = new MyObject("Alice");
 Dictionary<string, object?> data = GDObject.ToData(alice);
-MyObject aliceAgain = GDObject.FromData(data);
+MyObject aliceAgain = GDObject.FromData<MyObject>(data);
 ```
 
 Likewise, if you are convinced each key and value in the `GDObject` is string convertible, you can serialize the model to a `Dictionary<string, string>`. This is helpful when passing data around for Steamworks lobbies, for example.
@@ -540,6 +484,8 @@ private void MyOnChangedHandler(Type1 value1, Type2 value2) {
 <!-- References -->
 
 [net-5-0]: https://github.com/godotengine/godot/issues/43458#issuecomment-725550284
+[go_dot_net_nuget]: https://www.nuget.org/packages/Chickensoft.GoDotNet/
+[GoDotLog]: https://github.com/chickensoft-games/go_dot_log
 [godot-dictionary-iterable-issue]: https://github.com/godotengine/godot/issues/56733
 [call-deferred]: https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-call-deferred
 [provider]: https://pub.dev/packages/provider
