@@ -59,7 +59,13 @@ namespace GoDotNet {
         () => JObject.FromObject(obj).ToObject<Dictionary<string, string>>()!
       );
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Computes the properties of the object and returns a set of property
+    /// names. Uses Newtonsoft.Json to serialize object properties.
+    /// </summary>
+    /// <param name="obj">GDObject or subclass instance.</param>
+    /// <typeparam name="T">GDObject or subclass.</typeparam>
+    /// <returns>Set of property names in the object.</returns>
     public static HashSet<string> GetKeys<T>(T obj) where T : GDObject
       => JObject.FromObject(obj).Properties().Select(
         prop => prop.Name
@@ -80,11 +86,23 @@ namespace GoDotNet {
       return hashCode.ToHashCode();
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Equality operator.
+    /// </summary>
+    /// <param name="a">GDObject instance.</param>
+    /// <param name="b">Another GDObject instance</param>
+    /// <returns>True if the instances are equal (inspects each serialized
+    /// property value via GetHashCode).</returns>
     public static bool operator ==(GDObject? a, GDObject? b)
       => a?.GetHashCode() == b?.GetHashCode();
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Inequality operator.
+    /// </summary>
+    /// <param name="a">GDObject instance.</param>
+    /// <param name="b">Another GDObject instance</param>
+    /// <returns>True if the instances are not equal (inspects each serialized
+    /// property value via GetHashCode).</returns>
     public static bool operator !=(GDObject? a, GDObject? b) => !(a == b);
 
     #endregion
