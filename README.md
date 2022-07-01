@@ -1,6 +1,6 @@
 # GoDotNet
 
-[![Discord](https://img.shields.io/badge/Chickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white)](https://discord.gg/gSjaPgMmYW)
+[![Discord](https://img.shields.io/badge/Chickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white)][discord]
 
 > Simple dependency injection, state management, serialization, and other utilities for C# Godot development.
 
@@ -9,6 +9,8 @@ GoDotNet aims to make well-structured C# code for your Godot game a reality.
 While developing our own game, we couldn't find any simple C# solutions to solve problems like dependency injection, basic serialization of Godot objects, and state machines. So, we built our own mechanisms that were heavily inspired by other popular frameworks. We will probably never finish our game anyway, so might as well share! 🤷‍♀️.
 
 For a full description of everything GoDotNet can do, read on!
+
+Are you on discord? If you're building games with Godot and C#, we'd love to see you in the [Chickensoft Discord server][discord]!
 
 ## Installation
 
@@ -485,6 +487,7 @@ private void MyOnChangedHandler(Type1 value1, Type2 value2) {
 
 <!-- References -->
 
+[discord]: https://discord.gg/gSjaPgMmYW
 [net-5-0]: https://github.com/godotengine/godot/issues/43458#issuecomment-725550284
 [go_dot_net_nuget]: https://www.nuget.org/packages/Chickensoft.GoDotNet/
 [GoDotLog]: https://github.com/chickensoft-games/go_dot_log
