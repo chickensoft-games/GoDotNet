@@ -6,7 +6,7 @@
 
 GoDotNet aims to make well-structured C# code for your Godot game a reality.
 
-While developing our own game, we couldn't find any simple C# solutions to solve problems like dependency injection, basic serialization of Godot objects, and state machines. So, we built our own mechanisms that were heavily inspired by other popular frameworks. We will probably never finish our game anyway, so might as well share! 🤷‍♀️.
+While developing our own game, we couldn't find any simple C# solutions to solve problems like dependency injection, basic serialization of Godot objects, and state machines. So, we built our own mechanisms that were heavily inspired by other popular frameworks. Hopefully you can benefit from them, too!
 
 For a full description of everything GoDotNet can do, read on!
 
