@@ -2,10 +2,16 @@
 namespace GoDotNet {
   using System;
   using Newtonsoft.Json;
-  internal class ArrayJsonConverter : JsonConverter {
+
+  /// <summary>
+  /// Newtonsoft.JSON converter used to help serialize Godot array objects.
+  /// </summary>
+  public class ArrayJsonConverter : JsonConverter {
+    /// <inheritdoc/>
     public override bool CanConvert(Type objectType)
        => objectType == typeof(Godot.Collections.Array);
 
+    /// <inheritdoc/>
     public override object ReadJson(
       JsonReader reader,
       Type objectType,
@@ -39,6 +45,7 @@ namespace GoDotNet {
       }
       return list;
     }
+    /// <inheritdoc/>
 
     public override void WriteJson(
       JsonWriter writer, object? value, JsonSerializer serializer
