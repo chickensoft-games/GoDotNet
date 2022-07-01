@@ -4,11 +4,11 @@
 
 > Simple dependency injection, state management, serialization, and other utilities for C# Godot development.
 
-GoDotNet is a library of code which (hopefully) makes using C# in Godot a little bit less painful.
+GoDotNet aims to make well-structured C# code for your Godot game a reality.
 
-While developing a game, we couldn't find any simple C# solutions to solve problems like dependency injection, basic serialization of Godot objects, and state machines. So, we built our own mechanisms (heavily inspired by other frameworks). It's now time to share this with the wider Godot community, since we will probably never finish our game anyway 🤷‍♀️.
+While developing our own game, we couldn't find any simple C# solutions to solve problems like dependency injection, basic serialization of Godot objects, and state machines. So, we built our own mechanisms that were heavily inspired by other popular frameworks. We will probably never finish our game anyway, so might as well share! 🤷‍♀️.
 
-GoDotNet is itself written in C# 10 for `netstandard2.1` (the highest language version currently supported by Godot). If you want to setup your project the same way, look no further than the [`GoDotNet.csproj`](GoDotNet.csproj) file for inspiration!
+For a full description of everything GoDotNet can do, read on!
 
 ## Installation
 
@@ -19,6 +19,8 @@ In your `*.csproj`, add the following snippet in your `<ItemGroup>`, save, and r
 ```xml
 <PackageReference Include="Chickensoft.GoDotNet" Version="*VERSION*" />
 ```
+
+GoDotNet is itself written in C# 10 for `netstandard2.1` (the highest language version currently supported by Godot). If you want to setup your project the same way, look no further than the [`GoDotNet.csproj`](GoDotNet.csproj) file for inspiration!
 
 ## Logging
 
