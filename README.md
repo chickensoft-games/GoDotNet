@@ -2,15 +2,11 @@
 
 [![Discord](https://img.shields.io/badge/Chickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white)][discord]
 
-> Simple dependency injection, state management, serialization, and other utilities for C# Godot development.
-
-GoDotNet aims to make well-structured C# code for your Godot game a reality.
+Simple dependency injection, state management, serialization, and other utilities for C# Godot development.
 
 While developing our own game, we couldn't find any simple C# solutions to solve problems like dependency injection, basic serialization of Godot objects, and state machines. So, we built our own mechanisms that were heavily inspired by other popular frameworks. Hopefully you can benefit from them, too!
 
-For a full description of everything GoDotNet can do, read on!
-
-Are you on discord? If you're building games with Godot and C#, we'd love to see you in the [Chickensoft Discord server][discord]!
+> Are you on discord? If you're building games with Godot and C#, we'd love to see you in the [Chickensoft Discord server][discord]!
 
 ## Installation
 
@@ -26,7 +22,7 @@ GoDotNet is itself written in C# 10 for `netstandard2.1` (the highest language v
 
 ## Logging
 
-Internally, GoDotNet uses [GoDotLog] for logging. GoDotLog allows you to easily create loggers that output nicely formatted, prefixed messages (in addition to asserts other exception-aware execution utilities).
+Internally, GoDotNet uses [GoDotLog] for logging. GoDotLog allows you to easily create loggers that output nicely formatted, prefixed messages (in addition to asserts and other exception-aware execution utilities).
 
 ## Extensions
 
@@ -149,7 +145,6 @@ Providers should only call `this.Provided()` after all of the values provided ar
 
 Dependent nodes that are added after the provider node has initialized their dependencies will have their `Loaded()` method called right away.
 
-
 > `this.Provided()` is necessary because `_Ready()` is called on child nodes *before* parent nodes due to [Godot's tree order][godot-tree-order]. If you try to use a dependency in a dependent node's `_Ready()` method, there's no guarantee that it's been created, which results in null exception errors. Since it's often not possible to create dependencies until `_Ready()`, provider nodes are expected to invoke `this.Provided()` once all of their provided values are created.
 
 Nodes can provide multiple values just as easily.
@@ -198,6 +193,10 @@ public void Loaded() {
 > Internally, `this.Depend()` will look up all of the properties of your node which have a `[Dependency]` attribute and cache their providers for future access. If a provider hasn't initialized a dependency, hooks will be registered which call your dependent node's `Loaded()` method once all the dependencies are available. 
 
  In `Loaded()`, dependent nodes are guaranteed to be able to access their dependency values. Below is a complete example.
+
+ > What about performance? Dependency resolution runs in `O(n)` for each dependency that is resolved on a node. Once a node has found a provider for its dependency, further access is `O(1)` (instantaneous).
+ > 
+ > In general, avoid nesting nodes too far away their providers. If needed, you can create a provider lower in your scene tree above many nodes which need a dependency. This provider can depend on a value provided above it and provide it to its descendants, drastically shortening the length of the tree that must be searched for its descendants to resolve their dependencies.
 
 ```csharp
 public class DependentNode : Node, IDependent {
