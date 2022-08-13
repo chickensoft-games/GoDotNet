@@ -1,10 +1,12 @@
 # GoDotNet
 
-[![Discord](https://img.shields.io/badge/Chickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white)][discord]
+[![Chickensoft Badge][chickensoft-badge]][chickensoft-website] [![Discord](https://img.shields.io/badge/Chickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white)][discord] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
 
-Simple dependency injection, state management, serialization, and other utilities for C# Godot development.
+State machines, notifiers, serialization, and other utilities for C# Godot development.
 
-While developing our own game, we couldn't find any simple C# solutions to solve problems like dependency injection, basic serialization of Godot objects, and state machines. So, we built our own mechanisms that were heavily inspired by other popular frameworks. Hopefully you can benefit from them, too!
+> 🚨🔍 Looking for node-based dependency injection with providers and dependents? That functionality has been moved to it's own package, [GoDotDep][go_dot_dep]!
+
+While developing our own game, we couldn't find any simple C# solutions for simple state machines, basic serialization of Godot objects, notifiers, and mechanisms for avoiding unnecessary marshalling with Godot. So, we built our own systems that were heavily inspired by other popular frameworks. Hopefully you can benefit from them, too!
 
 > Are you on discord? If you're building games with Godot and C#, we'd love to see you in the [Chickensoft Discord server][discord]!
 
@@ -54,20 +56,6 @@ public class MyEntity : Node {
 }
 ```
 
-#### Dependencies
-
-Nodes can indicate that they require a certain type of value to be provided to them by any ancestor node above them in the scene tree.
-
-GoDotNet's dependency system is [discussed in detail below](#dependency-injection).
-
-To fetch a dependency:
-
-```csharp
-// Inside a Node subclass:
-[Dependency]
-private MyDependencyType _myDependency => this.DependOn<MyDependencyType>();
-```
-
 ## Scheduling
 
 A `Scheduler` node is included which allows callbacks to be run on the next frame, similar to [CallDeferred][call-deferred]. Unlike `CallDeferred`, the scheduler uses vanilla C# to avoid marshalling types to Godot. Since Godot cannot marshal objects that don't extend `Godot.Object`/`Godot.Reference`, this utility is provided to perform the same function for records, custom types, and C# collections which otherwise couldn't be marshaled between C# and Godot.
@@ -95,154 +83,6 @@ this.Autoload<Scheduler>().NextFrame(
   () => _log.Print("I won't execute until the next frame.")
 )
 ```
-
-## Dependency Injection
-
-GoDotNet provides a simple dependency injection system which allows dependencies to be provided to child nodes, looked-up, cached, and read on demand. By "dependency", we simply mean "any value or instance a node might need to perform its job." Oftentimes, dependencies are simply instances of custom classes which perform game logic.
-
-### Why have a dependency system?
-
-Why are dependency injection systems helpful? In Godot, providing values to descendent nodes typically requires parent nodes to pass values to children nodes via method calls, following the ["call down, signal upwards"][call-down-signal-up] architecture rule. This creates a tight coupling between the parent and the child since the parent has to know which children need which values.
-
-If a distant descendant node of the parent also needs the same value, the parent's children have to pass it down until it reaches the correct descendent, too. Not only is it an awful lot of typing to create all those methods which just pass an object to a child node, it makes the code harder to follow as you may have to trace the dependency through many different files. All of this reinforces tight coupling, too, which is exactly what a good dependency injection system should prevent.
-
-Finally, doing all that work doesn't even guarantee that the descendants will have the most up-to-date value or instance of the thing they need.
-
-GoDotNet's dependency system solves this by letting nodes indicate they provide values by implementing an interface, and letting the descendent nodes that need those values look for nodes above them that provide the values they need. GoDotNet takes care of all the work of caching dependency providers and announcing when dependencies are ready to be used under the hood.
-
-Dependent nodes don't need to know what kind of ancestor nodes they have — they just search for the closest node above them that can provide the value they need, ensuring loose coupling in both directions.
-
-### Providing and Fetching Dependencies
-
-Providing values to nodes further down the tree is based on the idea of scoping dependencies, inspired by [popular systems][provider] in other frameworks that have already demonstrated their usefulness.
-
-To create a node which provides a value to all of its descendant nodes, you must implement the `IProvider<T>` interface.
-
-`IProvider` requires a single `Get()` method that returns an instance of the object it provides.
-
-```csharp
-public class MySceneNode : IProvider<MyObject> {
-  // If this object has to be created in _Ready(), we can use `null!` since we
-  // know the value will be valid after _Ready is called. This is as close as we
-  // can get to the `late` modifier in Dart or `lateinit` in Kotlin.
-  private MyObject _object = null!;
-
-  // IProvider<MyObject> requires us to implement a single method:
-  MyObject IProvider<MyObject>.Get() => _object;
-
-  public override void _Ready() {
-    _object = new MyObject();
-    
-    // Notify any dependencies that the values provided are now available.
-    this.Provided();
-  }
-}
-```
-
-Once all of the values are initialized, the provider node must call `this.Provided()` to inform any dependencies that the provided values are now available. Any dependencies already in existence in the subtree will have their `Loaded()` methods called, allowing them to perform initialization with the now-available dependencies.
-
-Providers should only call `this.Provided()` after all of the values provided are non-null.
-
-Dependent nodes that are added after the provider node has initialized their dependencies will have their `Loaded()` method called right away.
-
-> `this.Provided()` is necessary because `_Ready()` is called on child nodes *before* parent nodes due to [Godot's tree order][godot-tree-order]. If you try to use a dependency in a dependent node's `_Ready()` method, there's no guarantee that it's been created, which results in null exception errors. Since it's often not possible to create dependencies until `_Ready()`, provider nodes are expected to invoke `this.Provided()` once all of their provided values are created.
-
-Nodes can provide multiple values just as easily.
-
-```csharp
-public class MySceneNode : IProvider<MyObject>, IProvider<MyOtherObject> {
-  private MyObject _object = null!;
-
-  private MyOtherObject _otherObject = null!;
-
-  MyObject IProvider<MyObject>.Get() => _object;
-  MyOtherObject IProvider<MyOtherObject>.Get() => _otherObject;
-
-  public override void _Ready() {
-    _object = new MyObject(/* ... */);
-    _otherObject = new MyOtherObject(/* ... */);
-
-    // Notify any dependencies that the values provided are now available.
-    this.Provided();
-  }
-}
-```
-
-To use dependencies, a node must implement `IDependent` and call `this.Depend()` at the end of the `_Ready()` method.
-
-Dependent nodes declare dependencies by creating a property with the `[Dependency]` attribute and calling the node extension method `this.DependOn` with the type of value they are depending on.
-
-```csharp
-[Dependency]
-private ObjectA _a => this.DependOn<ObjectA>();
-
-[Dependency]
-private ObjectB _b => this.DependOn<ObjectB>();
-```
-
-The `IDependent` interface requires you to implement a single void method, `Loaded()`, which is called once all the values the node depends on have been initialized by their providers. For `Loaded()` to be called, you must call `this.Depend()` in your dependent node's `_Ready()` method.
-
-```csharp
-public void Loaded() {
-  // _a and _b are guaranteed to be non-null here.
-  _a.DoSomething();
-  _b.DoSomething();
-}
-```
-
-> Internally, `this.Depend()` will look up all of the properties of your node which have a `[Dependency]` attribute and cache their providers for future access. If a provider hasn't initialized a dependency, hooks will be registered which call your dependent node's `Loaded()` method once all the dependencies are available. 
-
- In `Loaded()`, dependent nodes are guaranteed to be able to access their dependency values. Below is a complete example.
-
- > What about performance? Dependency resolution runs in `O(n)` for each dependency that is resolved on a node. Once a node has found a provider for its dependency, further access is `O(1)` (instantaneous).
- > 
- > In general, avoid nesting nodes too far away their providers. If needed, you can create a provider lower in your scene tree above many nodes which need a dependency. This provider can depend on a value provided above it and provide it to its descendants, drastically shortening the length of the tree that must be searched for its descendants to resolve their dependencies.
-
-```csharp
-public class DependentNode : Node, IDependent {
-  // As long as there's a node which implements IProvider<MyObject> above us,
-  // we will be able to access this object once `Loaded()` is called.
-  [Dependency]
-  private MyObject _object => this.DependOn<MyObject>();
-
-  public override void _Ready() {
-    // _object might actually be null here if the parent provider doesn't create
-    // it in its constructor. Since many providers won't be creating 
-    // dependencies until their _Ready() is invoked, which happens *after*
-    // child node, we shouldn't reference dependencies in dependent nodes'
-    // _Ready() methods.
-
-    this.Depend();
-  }
-
-  public void Loaded() {
-    // This method is called by the dependency system when all of the provided
-    // values we depend on have been finalized by their providers!
-    //
-    // _object is guaranteed to be initialized here!
-    _object.DoSomething();
-  }
-}
-```
-
-*Note*: If the dependency system can't find the correct provider in a dependent node's ancestors, it will search all of the autoloads for an autoload which implements the correct provider type. This allows you to "fallback" to global providers (should you want to).
-
-### Dependency Caveats
-
-Like all dependency injection systems, there are a few corner cases you should be aware of.
-
-#### Removing and Re-adding Nodes
-
-If a node is removed from the tree and inserted somewhere else in the tree, it might try to use a cached version of the wrong provider. To prevent invalid
-situations like this, you should clear the dependency cache and recreate it when a node re-enters the tree. This can be accomplished by simply calling `this.Depend()` again from the dependent node, which will call `Loaded()` again.
-
-By placing provider nodes above all the possible parents of a node which depends on that value, you can ensure that a node will always be able to find the dependency it requests. Clever provider hierarchies will prevent most of these headaches.
-
-#### Dependency Deadlock
-
-If you initialize dependencies in a complex (or slow way) by failing to call `this.Provided()` from your provider's `_Ready()` method, there is a risk of seriously slowing down (or deadlocking) the dependency resolution in the children. `Loaded()` isn't called on child nodes using `this.Depend()` until **all** of the dependencies they depend on from the ancestor nodes have been provided, so `Loaded()` will only be invoked when the slowest dependency has been marked provided via `this.Provided()` in the ancestor provider node.
-
-To avoid this situation entirely, always initialize dependencies in your provider's `_Ready()` method and call `this.Provided()` immediately afterwards.
 
 ## State Machines
 
@@ -312,7 +152,7 @@ public class GameManager : Node {
 
 A notifier is an object which emits a signal when its value changes. Notifiers are similar to state machines, but they don't care about transitions. Any update that changes the value (determined by comparing the new value with the previous value using `Object.Equals`) will emit a signal. It's often convenient to use record types as the value of a Notifier. Like state machines, the value of a notifier can never be `null` — make sure you initialize with a valid value!
 
-Because notifiers check equality to determine changes, they are convenient to use with value types (like primitives and structs). Notifiers, like state machines, also emit a signal to announce their value as soon as they are constructed.
+Because notifiers check equality to determine changes, they are convenient to use with "value" types (like primitives, records, and structs). Notifiers, like state machines, also emit a signal to announce their value as soon as they are constructed.
 
 ```csharp
 private var _notifier
@@ -486,15 +326,17 @@ private void MyOnChangedHandler(Type1 value1, Type2 value2) {
 
 <!-- References -->
 
+[chickensoft-badge]: https://chickensoft.games/images/chickensoft/chickensoft_badge.svg
+[chickensoft-website]: https://chickensoft.games
 [discord]: https://discord.gg/gSjaPgMmYW
+[line-coverage]: https://raw.githubusercontent.com/chickensoft-games/go_dot_net/main/test/reports/line_coverage.svg
+[branch-coverage]: https://raw.githubusercontent.com/chickensoft-games/go_dot_net/main/test/reports/branch_coverage.svg
+[go_dot_dep]: https://github.com/chickensoft-games/go_dot_dep
 [net-5-0]: https://github.com/godotengine/godot/issues/43458#issuecomment-725550284
 [go_dot_net_nuget]: https://www.nuget.org/packages/Chickensoft.GoDotNet/
 [GoDotLog]: https://github.com/chickensoft-games/go_dot_log
 [godot-dictionary-iterable-issue]: https://github.com/godotengine/godot/issues/56733
 [call-deferred]: https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-call-deferred
-[provider]: https://pub.dev/packages/provider
-[call-down-signal-up]: https://kidscancode.org/godot_recipes/basics/node_communication/
 [signals]: https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_features.html#c-signals
 [composition-inheritance]: https://en.wikipedia.org/wiki/Composition_over_inheritance
 [export-default-values]: https://github.com/godotengine/godot/issues/37703#issuecomment-877406433
-[godot-tree-order]: https://kidscancode.org/godot_recipes/basics/tree_ready_order/

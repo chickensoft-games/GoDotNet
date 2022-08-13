@@ -7,8 +7,6 @@ namespace GoDotNet {
   /// </summary>
   /// <typeparam name="TData">Type of data emitted.</typeparam>
   public sealed class Notifier<TData> {
-    /// <summary>Internal value.</summary>
-    private TData _data;
 
     /// <summary>
     /// Signature of the event handler for when the value changes. The notifier
@@ -27,7 +25,7 @@ namespace GoDotNet {
     /// <param name="onChanged">Event handler, if any.</param>
     public Notifier(TData initialValue, Changed? onChanged = null) {
       if (onChanged != null) { OnChanged += onChanged; }
-      _data = initialValue;
+      Value = initialValue;
       Announce(default);
     }
 
@@ -37,15 +35,18 @@ namespace GoDotNet {
     public event Changed? OnChanged;
 
     /// <summary>Current notifier value.</summary>
-    public TData Value {
-      get => _data;
-      set => Update(_data, value);
-    }
+    public TData Value { get; private set; }
 
-    private void Update(TData current, TData value) {
-      var hasChanged = !Object.Equals(current, value);
-      var previous = current;
-      _data = value;
+    /// <summary>
+    /// Updates the notifier value. Any listeners will be called with the
+    /// new and previous values if the new value is not equal to the old value
+    /// (as determined by Object.Equals).
+    /// </summary>
+    /// <param name="value">New value of the notifier.</param>
+    public void Update(TData value) {
+      var hasChanged = !Object.Equals(Value, value);
+      var previous = Value;
+      Value = value;
       if (hasChanged) {
         Announce(previous);
       }

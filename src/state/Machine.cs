@@ -41,7 +41,7 @@ namespace GoDotNet {
     /// </summary>
     /// <param name="state">The requested next state.</param>
     /// <returns>True to allow the state transition, false to prevent.</returns>
-    public virtual bool CanTransitionTo(TState state) => true;
+    bool CanTransitionTo(TState state);
   }
 
   /// <summary>
@@ -59,7 +59,7 @@ namespace GoDotNet {
     /// <summary>
     /// The current state of the machine.
     /// </summary>
-    public TState Value { get; private set; }
+    public TState State { get; private set; }
 
     /// <summary>
     /// Event handler for when the machine's state changes.
@@ -84,12 +84,12 @@ namespace GoDotNet {
     /// <param name="state">Initial state of the machine.</param>
     /// <param name="onChanged"></param>
     public Machine(TState state, Changed? onChanged = null) {
-      Value = state;
+      State = state;
       if (onChanged != null) { OnChanged += onChanged; }
       Announce();
     }
 
-    private void Announce() => OnChanged?.Invoke(Value);
+    private void Announce() => OnChanged?.Invoke(State);
 
     /// <summary>
     /// Adds a value to the queue of pending transitions. If the next state
@@ -100,6 +100,14 @@ namespace GoDotNet {
     /// </summary>
     /// <param name="value">State for the machine to transition to.</param>
     public void Update(TState value) {
+      // Because machine state can be updated when firing state events from
+      // previous state updates, we need to make sure we don't allow another
+      // announce loop to begin while we're already announcing state updates.
+      //
+      // Instead, we just make sure we add the transition to the list of
+      // pending transitions. State machines are guaranteed to enter each state
+      // requested in the order they are requested (or throw an error if the
+      // requested sequence is not comprised of valid transitions).
       _pendingTransitions.Enqueue(value);
 
       if (IsBusy) {
@@ -110,17 +118,17 @@ namespace GoDotNet {
 
       while (_pendingTransitions.Count > 0) {
         var state = _pendingTransitions.Dequeue();
-        if (Value.Equals(state)) {
+        if (State.Equals(state)) {
           continue;
         }
 
-        if (Value.CanTransitionTo(state)) {
-          Value = state;
+        if (State.CanTransitionTo(state)) {
+          State = state;
           Announce();
         }
         else {
           IsBusy = false;
-          throw new InvalidStateTransition<TState>(Value, state);
+          throw new InvalidStateTransition<TState>(State, state);
         }
       }
 

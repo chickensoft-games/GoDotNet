@@ -9,7 +9,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <Title>GoDotNet</Title>
-    <Description>Node-based dependency injection, state management, and extensions for C# and Godot.</Description>
+    <Description>State machines, notifiers, serialization, and other utilities for C# Godot development.</Description>
     <Copyright>© 2022 Chickensoft Games</Copyright>
     <Company>Chickensoft</Company>
 
@@ -17,7 +17,7 @@
     <PackageVersion>0.0.2</PackageVersion>
     <PackageReleaseNotes>GoDotNet release.</PackageReleaseNotes>
     <PackageIcon></PackageIcon>
-    <PackageTags>Godot;Dependency;Dependencies;DI;Dependency Injection;Loader;State Machine;Deterministic;Finite;FSM;Extensions;Notifier;Listener;Observable;Injector;Runner;Chickensoft;Gamedev;Utility;Utilities</PackageTags>
+    <PackageTags>Godot;Loader;State Machine;Deterministic;Finite;FSM;Extensions;Notifier;Listener;Observable;Chickensoft;Gamedev;Utility;Utilities</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>git@github.com:chickensoft-games/go_dot_net.git</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
