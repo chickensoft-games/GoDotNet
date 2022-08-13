@@ -77,6 +77,12 @@ jobs:
           ~/.dotnet/tools/reportgenerator -reports:"./coverage/coverage.info" \
             -targetdir:"./coverage/report" -reporttypes:JsonSummary
 
+      - name: Create Coverage Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: test/coverage/report
+
       - name: Check Test Coverage
         working-directory: test
         run: |
