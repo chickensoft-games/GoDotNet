@@ -12,7 +12,7 @@ jobs:
       EXCLUSIONS: "**/addons/**/*.cs:**/test/**/*.cs"
     runs-on: ubuntu-latest
     container:
-      image: barichello/godot-ci:mono-3.4.4
+      image: barichello/godot-ci:mono-3.5
     steps:
       - uses: actions/checkout@v2
 
