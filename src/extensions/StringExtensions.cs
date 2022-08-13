@@ -2,7 +2,7 @@ namespace GoDotNet {
   /// <summary>
   /// String extensions.
   /// </summary>
-  public static class StringX {
+  public static class StringExtensions {
     /// <summary>
     /// Returns the string with the first letter capitalized.
     /// </summary>

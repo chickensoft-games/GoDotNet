@@ -5,6 +5,7 @@
     "autoloads",
     "barichello",
     "branchcoverage",
+    "Chickensoft",
     "cref",
     "Deps",
     "Fasterflect",
@@ -12,13 +13,18 @@
     "inheritdoc",
     "lcov",
     "linecoverage",
+    "nameof",
+    "netstandard",
     "Newtonsoft",
     "notnull",
     "reportgenerator",
     "reporttypes",
     "Shouldly",
+    "Steamworks",
+    "structs",
     "targetargs",
     "targetdir",
-    "typeparam"
+    "typeparam",
+    "unawaited"
   ]
 }

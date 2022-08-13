@@ -1,5 +1,5 @@
 name: GoDotTest
-on: [pull_request, push]
+on: [pull_request]
 
 jobs:
   test:
@@ -7,12 +7,12 @@ jobs:
       branch-coverage: ${{ steps.branch-coverage.outputs.BRANCH_COVERAGE }}
       line-coverage: ${{ steps.branch-coverage.outputs.LINE_COVERAGE }}
     env:
-      MIN_LINE_COVERAGE: 10.0
-      MIN_BRANCH_COVERAGE: 10.0
+      MIN_LINE_COVERAGE: 100.0
+      MIN_BRANCH_COVERAGE: 100.0
       EXCLUSIONS: "**/addons/**/*.cs:**/test/**/*.cs"
     runs-on: ubuntu-latest
     container:
-      image: barichello/godot-ci:mono-3.4.4
+      image: barichello/godot-ci:mono-3.5
     steps:
       - uses: actions/checkout@v2
 
@@ -68,7 +68,7 @@ jobs:
             SPLIT=$(echo "$1" | cut -d "$GLOB_DELIMITER" -f $N)
           done
 
-          COMMAND="~/.dotnet/tools/coverlet .mono/temp/bin/Debug/ --target $(which godot) --targetargs \"--run-tests --quit-on-finish\" --format \"lcov\" --output ./coverage/coverage.info $EXCLUSIONS"
+          COMMAND="~/.dotnet/tools/coverlet .mono/temp/bin/Debug/ --target $(which godot) --targetargs \"--run-tests --quit-on-finish\" --format \"lcov\" --output ./coverage/coverage.info --exclude-by-file "**/test/**/*.cs" $EXCLUSIONS"
           eval "$COMMAND"
 
       - name: Generate Coverage Report
@@ -76,6 +76,12 @@ jobs:
         run: |
           ~/.dotnet/tools/reportgenerator -reports:"./coverage/coverage.info" \
             -targetdir:"./coverage/report" -reporttypes:JsonSummary
+
+      # - name: Create Coverage Artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: coverage-report
+      #     path: test/coverage/report
 
       - name: Check Test Coverage
         working-directory: test
