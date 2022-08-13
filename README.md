@@ -1,12 +1,12 @@
 # GoDotNet
 
-[![Chickensoft Badge][chickensoft-badge]][chickensoft-website] [![Discord](https://img.shields.io/badge/Chickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white)][discord] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
+[![Chickensoft][chickensoft-badge]][chickensoft-website] [![Discord][discord-badge]][discord] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
 
-State machines, notifiers, serialization, and other utilities for C# Godot development.
+State machines, notifiers, and other utilities for C# Godot development.
 
-> 🚨🔍 Looking for node-based dependency injection with providers and dependents? That functionality has been moved to it's own package, [GoDotDep][go_dot_dep]!
+> 🚨 Looking for node-based dependency injection with providers and dependents? That functionality has been moved to it's own package, [GoDotDep][go_dot_dep]!
 
-While developing our own game, we couldn't find any simple C# solutions for simple state machines, basic serialization of Godot objects, notifiers, and mechanisms for avoiding unnecessary marshalling with Godot. So, we built our own systems that were heavily inspired by other popular frameworks. Hopefully you can benefit from them, too!
+While developing our own game, we couldn't find any simple C# solutions for simple state machines, notifiers, and mechanisms for avoiding unnecessary marshalling with Godot. So, we built our own systems — hopefully you can benefit from them, too!
 
 > Are you on discord? If you're building games with Godot and C#, we'd love to see you in the [Chickensoft Discord server][discord]!
 
@@ -26,32 +26,17 @@ GoDotNet is itself written in C# 10 for `netstandard2.1` (the highest language v
 
 Internally, GoDotNet uses [GoDotLog] for logging. GoDotLog allows you to easily create loggers that output nicely formatted, prefixed messages (in addition to asserts and other exception-aware execution utilities).
 
-## Extensions
+## Autoloads
 
-GoDotNet provides a number of extensions on common Godot objects.
-### Godot Collections ↔️ Dotnet Collections
-
-A Godot Dictionary or Array can be converted to a .NET collection easily in `O(n)` time. Certain [bugs][godot-dictionary-iterable-issue] in Godot's collection types necessitate the need for converting back-and-forth occasionally. For performance reasons, try to avoid doing this often on large collections.
-
-```csharp
-using Godot.Collections;
-
-var array = new Array().ToDotNet();
-var dictionary = new Dictionary<KeyType, ValueType>().ToDotNet();
-```
-
-### Node Utilities
-
-#### Autoloads
-
-An autoload can be fetched from any node:
+An autoload can be fetched easily from any node. Once an autoload is found on the root child, GoDotNet caches it's type, allowing it to be looked up instantaneously without calling into Godot. 
 
 ```csharp
 public class MyEntity : Node {
-  private MyAutoloadType _myAutoload = this.Autoload<MyAutoloadType>();
+  private MyAutoloadType _myAutoload => this.Autoload<MyAutoloadType>();
 
   public override void _Ready() {
     _myAutoload.DoSomething();
+    var otherAutoload = this.Autoload<OtherAutoload>();
   }
 }
 ```
@@ -86,13 +71,13 @@ this.Autoload<Scheduler>().NextFrame(
 
 ## State Machines
 
-GoDotNet provides a simple state machine implementation that emits a C# event when the state changes (since [Godot signals are more fragile](#signals-and-events)). If you try to update the machine to a state that isn't a valid transition from the current state, it throws an exception. The machine requires that an initial state be given when the machine is constructed to avoid nullability issues.
+GoDotNet provides a simple state machine implementation that emits a C# event when the state changes (since [Godot signals are more fragile](#signals-and-events)). If you try to update the machine to a state that isn't a valid transition from the current state, it throws an exception. The machine requires an initial state to avoid nullability issues during construction.
 
 State machines are not extensible — instead, GoDotNet almost always prefers the pattern of [composition over inheritance][composition-inheritance]. The state machine relies on state equality to determine if the state has changed to avoid issuing unnecessary events. Using `record` types for the state allows this to happen automatically. 
 
-States used with a state machine must implement `IMachineState<T>`, where T is just the type of the machine state. Otherwise, the default implementation returns `true` to allow transitions to any state.
+States used with a state machine must implement `IMachineState<T>`, where T is just the type of the machine state. Your machine states can optionally implement `CanTransitionTo(IMachineState state)`, which should return true if the given "next state" is a valid transition. Otherwise, the default implementation returns `true` to allow transitions to any state.
 
-States can optionally implement `CanTransitionTo(IMachineState state)` to determine if the proposed state transition is valid.
+To create states for use with a machine, create an interface which implements `IMachineState<IYourInterface>`. Then, create record types for each state which implement your interface, optionally overriding `CanTransitionTo` for any states which only allow transitions to specific states.
 
 ```csharp
 public interface IGameState : IMachineState<IGameState> { }
@@ -109,6 +94,12 @@ public record GameLoadingState : IGameState {
 public record GamePlayingState(string PlayerName) {
   public bool CanTransitionTo(IGameState state) => state is GameMainMenuState;
 }
+```
+
+Simply omit implementing `CanTransitionTo` for any states which should allow transitions to any other state.
+
+```csharp
+public interface GameSuspended : IGameState { }
 ```
 
 Machines are fairly simple to use: create one with an initial state (and optionally register a machine state change event handler). A state machine will announce the state has changed as soon as it is constructed.
@@ -134,6 +125,9 @@ public class GameManager : Node {
     // ...
     // start the game!
     _machine.Update(new GamePlayingState(name);
+    // Read the current state at any time:
+    var state = _machine.State;
+    if (state is GamePlayingState) { /* ... */ }
   }
 
   /// <summary>Goes back to the menu.</summary>
@@ -163,7 +157,7 @@ private void OnPlayerNameChanged(string name) {
 }
 ```
 
-Like state machines, notifiers should typically be kept private. Instead of letting consumers modify the value directly, you can create a manager class which provides methods that mutate the notifier value. These manager classes can provide an event which redirects to the notifier event, or they can emit their own events when certain pieces of the notifier value changes.
+Like state machines, notifiers should typically be kept private. Instead of letting consumers modify the value directly, you can create game logic classes which provide the appropriate methods to mutate the notifier. Game logic classes can provide an event which redirects to the notifier event, or they can emit their own events when certain pieces of the notifier value changes.
 
 ```csharp
 public record EnemyData(string Name, int Health);
@@ -183,14 +177,14 @@ public class EnemyManager {
   );
 
   public void UpdateName(string name) =>
-    _notifier.Value = _notifier.Value with { Name = name };
+    _notifier.Update(_notifier.Value with { Name = name });
 
   public void UpdateHealth(int health) =>
-    _notifier.Value = _notifier.Value with { Health = health };
+    _notifier.Update(_notifier.Value with { Health = health });
 }
 ```
 
-The class above shows an enemy manager which manages a single enemy's state and emits an `OnChanged` event whenever any part of the enemy's state changes. You can easily modify it to emit more specific events when certain pieces of the enemy state changes.
+The class above shows an enemy state class that emits an `OnChanged` event whenever any part of the enemy's state changes. You can easily modify it to emit more specific events when certain pieces of the enemy state changes.
 
 ```csharp
 public class EnemyManager {
@@ -207,10 +201,10 @@ public class EnemyManager {
   );
 
   public void UpdateName(string name) =>
-    _notifier.Value = _notifier.Value with { Name = name };
+    _notifier.Update(_notifier.Value with { Name = name });
 
   public void UpdateHealth(int health) =>
-    _notifier.Value = _notifier.Value with { Health = health };
+    _notifier.Update(_notifier.Value with { Health = health });
 
   private void OnChanged(EnemyData enemy, EnemyData? previous) {
     // Emit different events depending on what changed.
@@ -224,57 +218,9 @@ public class EnemyManager {
 }
 ```
 
-By providing manager classes which wrap state machines or notifiers to dependent nodes, you can create nodes which easily respond to changes in the values provided by distant ancestor nodes.
+By providing classes which wrap state machines or notifiers to dependent nodes, you can create nodes which easily respond to changes in the values provided by distant ancestor nodes. To easily provide dependencies to distant child nodes, check out [go_dot_dep].
 
-## Serialization of Godot Objects
-
-GoDotNet provides a `GDObject` which extends `Godot.Reference` (which is itself a `Godot.Object`). Because it is a `Godot.Object`, `GDObject` can be marshalled back and forth between Godot's C++ layer without any issue, provided each of its fields is also a type that Godot supports.
-
-GoDotNet takes this a step further and offers basic dictionary serialization for GDObjects using the popular `Newtonsoft.Json` package (if you use the appropriate annotations for constructors and fields).
-
-When extending `GDObject` or `Godot.Object`, it is imperative to offer a default constructor with no parameters. Godot uses this default constructor [to create a default value for exported fields][export-default-values] in the editor.
-
-```csharp
-public class MyObject : GDObject {
-
-  // Init properties are a great way to keep things immutable on GDObject.
-  // Marking this with [JsonProperty] allows it to be serialized using 
-  // Newtonsoft.Json.
-  [JsonProperty]
-  public string PlayerName { get; init; }
-
-  // Default constructor to keep Godot happy.
-  public MyObject() {
-    PlayerName = default;
-  }
-
-  // Tell Newtonsoft.Json to use this constructor for deserialization.
-  [JsonConstructor]
-  public MyObject(string playerName) {
-    PlayerName = playerName;
-  }
-}
-```
-
-To serialize and deserialize a `GDObject` to and from a dictionary, respectively, you can use the static methods on `GDObject.`
-
-```csharp
-var alice = new MyObject("Alice");
-Dictionary<string, object?> data = GDObject.ToData(alice);
-MyObject aliceAgain = GDObject.FromData<MyObject>(data);
-```
-
-Likewise, if you are convinced each key and value in the `GDObject` is string convertible, you can serialize the model to a `Dictionary<string, string>`. This is helpful when passing data around for Steamworks lobbies, for example.
-
-```csharp
-var bob = new MyObject("Bob");
-Dictionary<string, string> stringData = GDObject.ToStringData(bob);
-MyObject bobAgain = GDObject.FromStringData(stringData);
-```
-
-## Technical Challenges
-
-### Signals and Events
+## Signals and Events
 
 Godot supports emitting [signals] from C#. Because Godot signals pass through the Godot engine, any arguments given to the signal must be marshalled through Godot, forcing them to be classes which extend `Godot.Object`/`Godot.Reference` (records aren't allowed). Likewise, all the fields in the class must also be the same kind of types so they can be marshalled, and so on.
 
@@ -326,11 +272,15 @@ private void MyOnChangedHandler(Type1 value1, Type2 value2) {
 
 <!-- References -->
 
+<!-- <Badges> -->
 [chickensoft-badge]: https://chickensoft.games/images/chickensoft/chickensoft_badge.svg
 [chickensoft-website]: https://chickensoft.games
 [discord]: https://discord.gg/gSjaPgMmYW
+[discord-badge]: https://img.shields.io/badge/Chickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white
 [line-coverage]: https://raw.githubusercontent.com/chickensoft-games/go_dot_net/main/test/reports/line_coverage.svg
 [branch-coverage]: https://raw.githubusercontent.com/chickensoft-games/go_dot_net/main/test/reports/branch_coverage.svg
+<!-- </Badges> -->
+
 [go_dot_dep]: https://github.com/chickensoft-games/go_dot_dep
 [net-5-0]: https://github.com/godotengine/godot/issues/43458#issuecomment-725550284
 [go_dot_net_nuget]: https://www.nuget.org/packages/Chickensoft.GoDotNet/

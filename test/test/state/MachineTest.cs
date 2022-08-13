@@ -4,48 +4,48 @@ using GoDotTest;
 using Shouldly;
 
 public class MachineTest : TestClass {
-  private record TestState : IMachineState<TestState> {
-    public virtual bool CanTransitionTo(TestState state) => true;
-  }
-  private record TestStateA : TestState {
-    public override bool CanTransitionTo(TestState state)
+  private interface ITestState : IMachineState<ITestState> { }
+  private record TestStateA : ITestState {
+    public bool CanTransitionTo(ITestState state)
       => state is TestStateB;
   }
-  private record TestStateB : TestState {
-    public override bool CanTransitionTo(TestState state)
+  private record TestStateB : ITestState {
+    public bool CanTransitionTo(ITestState state)
       => state is TestStateC;
   }
-  private record TestStateC : TestState {
-    public override bool CanTransitionTo(TestState state)
+  private record TestStateC : ITestState {
+    public bool CanTransitionTo(ITestState state)
       => state is TestStateA;
   }
+
+  private record TestStateD : ITestState { }
 
   public MachineTest(Node testScene) : base(testScene) { }
 
   [Test]
   public void Instantiates() {
-    var machine = new Machine<TestState>(new TestStateA());
+    var machine = new Machine<ITestState>(new TestStateA());
     machine.State.ShouldBe(new TestStateA());
   }
 
   [Test]
   public void InstantiatesWithListener() {
     var called = false;
-    void OnChanged(TestState state) {
+    void OnChanged(ITestState state) {
       state.ShouldBe(new TestStateA());
       called = true;
     }
-    var machine = new Machine<TestState>(new TestStateA(), OnChanged);
+    var machine = new Machine<ITestState>(new TestStateA(), OnChanged);
     called.ShouldBeTrue();
     machine.State.ShouldBe(new TestStateA());
   }
 
   [Test]
   public void UpdatesStateAndAnnounces() {
-    var machine = new Machine<TestState>(new TestStateA());
+    var machine = new Machine<ITestState>(new TestStateA());
 
     var called = false;
-    void OnChanged(TestState state) {
+    void OnChanged(ITestState state) {
       state.ShouldBe(new TestStateB());
       called = true;
     }
@@ -58,9 +58,9 @@ public class MachineTest : TestClass {
 
   [Test]
   public void DoesNothingOnSameState() {
-    var machine = new Machine<TestState>(new TestStateA());
+    var machine = new Machine<ITestState>(new TestStateA());
     var called = false;
-    void OnChanged(TestState state) => called = true;
+    void OnChanged(ITestState state) => called = true;
     machine.OnChanged += OnChanged;
     machine.Update(new TestStateA());
     called.ShouldBeFalse();
@@ -68,18 +68,26 @@ public class MachineTest : TestClass {
 
   [Test]
   public void ThrowsWhenTransitioningToInvalidNextState() {
-    var machine = new Machine<TestState>(new TestStateA());
+    var machine = new Machine<ITestState>(new TestStateA());
     machine.State.CanTransitionTo(new TestStateC()).ShouldBeFalse();
-    Should.Throw<InvalidStateTransition<TestState>>(
+    Should.Throw<InvalidStateTransition<ITestState>>(
       () => machine.Update(new TestStateC())
     );
   }
 
   [Test]
-  public void UpdatesStateFromAnnouncementPreservesOrdering() {
-    var machine = new Machine<TestState>(new TestStateA());
+  public void DefaultStateTransitionsToAnything() {
+    var machine = new Machine<ITestState>(new TestStateD());
+    machine.State.CanTransitionTo(new TestStateA()).ShouldBeTrue();
+    machine.State.CanTransitionTo(new TestStateB()).ShouldBeTrue();
+    machine.State.CanTransitionTo(new TestStateC()).ShouldBeTrue();
+  }
 
-    void OnChanged(TestState state) {
+  [Test]
+  public void UpdatesStateFromAnnouncementPreservesOrdering() {
+    var machine = new Machine<ITestState>(new TestStateA());
+
+    void OnChanged(ITestState state) {
       if (state is TestStateB) {
         machine.Update(new TestStateC());
       }

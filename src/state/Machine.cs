@@ -41,7 +41,7 @@ namespace GoDotNet {
     /// </summary>
     /// <param name="state">The requested next state.</param>
     /// <returns>True to allow the state transition, false to prevent.</returns>
-    bool CanTransitionTo(TState state);
+    bool CanTransitionTo(TState state) => true;
   }
 
   /// <summary>
