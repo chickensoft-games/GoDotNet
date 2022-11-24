@@ -1,3 +1,4 @@
+namespace GoDotNetTests;
 using System;
 using System.Diagnostics;
 using Godot;

@@ -1,6 +1,6 @@
+namespace GoDotNet;
 using System;
 using System.Collections.Generic;
-using GoDotNet;
 
 /// <summary>
 /// A static class used to cache autoloads whenever they are fetched. This

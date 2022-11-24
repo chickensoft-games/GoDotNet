@@ -1,3 +1,5 @@
+namespace GoDotNetTests;
+
 using Godot;
 using GoDotNet;
 using GoDotTest;
@@ -70,7 +72,7 @@ public class MachineTest : TestClass {
   public void ThrowsWhenTransitioningToInvalidNextState() {
     var machine = new Machine<ITestState>(new TestStateA());
     machine.State.CanTransitionTo(new TestStateC()).ShouldBeFalse();
-    Should.Throw<InvalidStateTransition<ITestState>>(
+    Should.Throw<InvalidStateTransitionException<ITestState>>(
       () => machine.Update(new TestStateC())
     );
   }

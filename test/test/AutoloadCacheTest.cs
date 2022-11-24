@@ -1,4 +1,6 @@
+namespace GoDotNetTests;
 using Godot;
+using GoDotNet;
 using GoDotTest;
 using Shouldly;
 
