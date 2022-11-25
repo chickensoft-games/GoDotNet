@@ -18,7 +18,7 @@ dotnet ~/coverlet/src/coverlet.console/bin/Debug/net5.0/coverlet.console.dll \
 reportgenerator \
   -reports:"./coverage/coverage.xml" \
   -targetdir:"./coverage/report" \
-  -reporttypes:Html,Badges
+  -reporttypes:Html
 
 reportgenerator \
   -reports:"./coverage/coverage.xml" \

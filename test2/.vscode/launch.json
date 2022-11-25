@@ -12,6 +12,8 @@
       "preLaunchTask": "build",
       "program": "${env:GODOT4}",
       "args": [
+        "--path",
+        "${workspaceFolder}",
         // These command line flags are used by GoDotTest to run tests.
         "--run-tests",
         "--quit-on-finish"
