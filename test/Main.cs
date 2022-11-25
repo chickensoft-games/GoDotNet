@@ -1,4 +1,4 @@
-namespace GoDotNet;
+namespace GoDotNetTests;
 using System.Reflection;
 using Godot;
 using GoDotTest;
