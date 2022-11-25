@@ -1,3 +1,6 @@
+namespace GoDotNet;
+
+using System;
 using Godot;
 
 /// <summary>

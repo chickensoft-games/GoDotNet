@@ -12,7 +12,8 @@
     <PackageReference Include="Chickensoft.GoDotTest" Version="1.1.0-beta6" />
 
     <PackageReference Include="Shouldly" Version="4.0.3" />
-    <PackageReference Include="Moq" Version="4.17.2" />
+    <PackageReference Include="LightMock.Generator" Version="1.1.2" />
+    <PackageReference Include="LightMoq" Version="0.1.0" />
 
     <!-- Include GoDotNet files directly -->
     <!-- https://stackoverflow.com/a/35477501 -->
