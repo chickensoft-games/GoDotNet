@@ -13,6 +13,7 @@ coverage/
 # Mono-specific ignores
 data_*/
 .mono/
+.godot/
 
 # Testing
 test/obj

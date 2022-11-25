@@ -1,18 +1,19 @@
-<Project Sdk="Godot.NET.Sdk/3.3.0">
+<Project Sdk="Godot.NET.Sdk/4.0.0-beta.6">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
-    <PlatformTarget>x64</PlatformTarget>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Chickensoft.GoDotLog" Version="0.0.5" />
-    <PackageReference Include="Chickensoft.GoDotTest" Version="0.0.4" />
+    <PackageReference Include="Chickensoft.GoDotLog" Version="1.0.2-beta6" />
+    <PackageReference Include="Chickensoft.GoDotTest" Version="1.1.2-beta6" />
 
     <PackageReference Include="Shouldly" Version="4.0.3" />
-    <PackageReference Include="Moq" Version="4.17.2" />
+    <PackageReference Include="LightMock.Generator" Version="1.1.2" />
+    <PackageReference Include="LightMoq" Version="0.1.0" />
 
     <!-- Include GoDotNet files directly -->
     <!-- https://stackoverflow.com/a/35477501 -->
