@@ -3,7 +3,6 @@
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>10.0</LangVersion>
     <Nullable>enable</Nullable>
-    <PlatformTarget>x64</PlatformTarget>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -15,7 +14,7 @@
     <Company>Chickensoft</Company>
 
     <PackageId>Chickensoft.GoDotNet</PackageId>
-    <PackageVersion>1.1.0-beta6</PackageVersion>
+    <PackageVersion>1.1.1-beta6</PackageVersion>
     <PackageReleaseNotes>GoDotNet release.</PackageReleaseNotes>
     <PackageIcon></PackageIcon>
     <PackageTags>Godot;State Machine;Deterministic;Finite;FSM;Extensions;Notifier;Listener;Observable;Chickensoft;Gamedev;Utility;Utilities</PackageTags>
