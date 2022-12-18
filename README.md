@@ -142,6 +142,19 @@ public class GameManager : Node {
 }
 ```
 
+### Read-only State Machines
+
+If you want another object to only be able to read the current state of a state machine and subscribe to changes, but not be able to update the state of the machine, you can expose the machine as an `IReadOnlyMachine<TState>` instead of as a `Machine<TState>`.
+
+```csharp
+public class AnObjectThatOnlyListensToAMachine {
+  public IReadOnlyMachine<string> Machine { get; set; }
+
+  // This object can listen and respond to state changes in Machine, but
+  // cannot mutate the state of the machine via `Machine.Update` :)  
+}
+```
+
 ## Notifiers
 
 A notifier is an object which emits a signal when its value changes. Notifiers are similar to state machines, but they don't care about transitions. Any update that changes the value (determined by comparing the new value with the previous value using `Object.Equals`) will emit a signal. It's often convenient to use record types as the value of a Notifier. Like state machines, the value of a notifier can never be `null` — make sure you initialize with a valid value!
@@ -219,6 +232,19 @@ public class EnemyManager {
 ```
 
 By providing classes which wrap state machines or notifiers to dependent nodes, you can create nodes which easily respond to changes in the values provided by distant ancestor nodes. To easily provide dependencies to distant child nodes, check out [go_dot_dep].
+
+### Read-only Notifiers
+
+As with state machines, a notifiers can be referenced as an `IReadOnlyNotifier<TValue>` to prevent objects using them from causing unwanted changes. The object(s) that own the notifier can reference it as a `Notifier<TValue>` and mutate it accordingly, while the listener objects can simply reference it as an `IReadOnlyNotifier<TValue>`.
+
+```csharp
+public class AnObjectThatOnlyListensToANotifier {
+  public IReadOnlyNotifier<string> Notifier { get; set; }
+
+  // This object can listen and respond to changes in the Notifier's value, but
+  // cannot mutate the value of the notifier via `Notifier.Update` :)  
+}
+```
 
 ## Signals and Events
 

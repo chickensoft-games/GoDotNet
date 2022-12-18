@@ -45,6 +45,24 @@ public interface IMachineState<TState> {
 }
 
 /// <summary>
+/// Read-only interface for a machine. Expose machines as this interface
+/// when you want to allow them to be observed and read, but not updated.
+/// </summary>
+public interface IReadOnlyMachine<TState> where TState : IMachineState<TState> {
+  /// <summary>
+  /// Event handler for when the machine's state changes.
+  /// </summary>
+  /// <param name="state">The new state of the machine.</param>
+  delegate void Changed(TState state);
+
+  /// <summary>Event emitted when the machine's state changes.</summary>
+  event Changed? OnChanged;
+
+  /// <summary>The current state of the machine.</summary>
+  TState State { get; }
+}
+
+/// <summary>
 /// A simple implementation of a state machine. Events an emit when the state
 /// is changed.
 ///
@@ -55,41 +73,35 @@ public interface IMachineState<TState> {
 /// states.
 /// </summary>
 /// <typeparam name="TState">Type of state used by the machine.</typeparam>
-public sealed class Machine<TState> where TState : IMachineState<TState> {
+public sealed class Machine<TState> : IReadOnlyMachine<TState>
+  where TState : IMachineState<TState> {
   /// <summary>
-  /// The current state of the machine.
+  /// Creates a new machine with the given initial state.
   /// </summary>
+  /// <param name="state">Initial state of the machine.</param>
+  /// <param name="onChanged"></param>
+  public Machine(
+    TState state,
+    IReadOnlyMachine<TState>.Changed? onChanged = null
+  ) {
+    State = state;
+    if (onChanged != null) { OnChanged += onChanged; }
+    Announce();
+  }
+
+  /// <inheritdoc/>
   public TState State { get; private set; }
 
-  /// <summary>
-  /// Event handler for when the machine's state changes.
-  /// </summary>
-  /// <param name="state">The new state of the machine.</param>
-  public delegate void Changed(TState state);
-
-  /// <summary>Event emitted when the machine's state changes.</summary>
-  public event Changed? OnChanged;
-
-  private Queue<TState> _pendingTransitions { get; set; }
-    = new Queue<TState>();
+  /// <inheritdoc/>
+  public event IReadOnlyMachine<TState>.Changed? OnChanged;
 
   /// <summary>
   /// Whether we're currently in the process of changing the state (or not).
   /// </summary>
   public bool IsBusy { get; private set; }
 
-  /// <summary>
-  /// Creates a new machine with the given initial state.
-  /// </summary>
-  /// <param name="state">Initial state of the machine.</param>
-  /// <param name="onChanged"></param>
-  public Machine(TState state, Changed? onChanged = null) {
-    State = state;
-    if (onChanged != null) { OnChanged += onChanged; }
-    Announce();
-  }
-
-  private void Announce() => OnChanged?.Invoke(State);
+  private Queue<TState> _pendingTransitions { get; set; }
+    = new Queue<TState>();
 
   /// <summary>
   /// Adds a value to the queue of pending transitions. If the next state
@@ -134,4 +146,6 @@ public sealed class Machine<TState> where TState : IMachineState<TState> {
 
     IsBusy = false;
   }
+
+  private void Announce() => OnChanged?.Invoke(State);
 }
