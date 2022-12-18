@@ -73,9 +73,9 @@ this.Autoload<Scheduler>().NextFrame(
 
 GoDotNet provides a simple state machine implementation that emits a C# event when the state changes (since [Godot signals are more fragile](#signals-and-events)). If you try to update the machine to a state that isn't a valid transition from the current state, it throws an exception. The machine requires an initial state to avoid nullability issues during construction.
 
-State machines are not extensible — instead, GoDotNet almost always prefers the pattern of [composition over inheritance][composition-inheritance]. The state machine relies on state equality to determine if the state has changed to avoid issuing unnecessary events. Using `record` types for the state allows this to happen automatically. 
+State machines are not extensible — instead, GoDotNet almost always prefers the pattern of [composition over inheritance][composition-inheritance]. The state machine relies on state equality to determine if the state has changed to avoid issuing unnecessary events. Using `record` or other value types for the state makes equality checking work automatically for free. 
 
-States used with a state machine must implement `IMachineState<T>`, where T is just the type of the machine state. Your machine states can optionally implement `CanTransitionTo(IMachineState state)`, which should return true if the given "next state" is a valid transition. Otherwise, the default implementation returns `true` to allow transitions to any state.
+States used with a state machine must implement `IMachineState<T>`, where T is just the type of the machine state. Your machine states can optionally implement the method `CanTransitionTo(IMachineState state)`, which should return true if the given "next state" is a valid transition. Otherwise, the default implementation returns `true` to allow transitions to any state.
 
 To create states for use with a machine, create an interface which implements `IMachineState<IYourInterface>`. Then, create record types for each state which implement your interface, optionally overriding `CanTransitionTo` for any states which only allow transitions to specific states.
 
@@ -108,14 +108,8 @@ Machines are fairly simple to use: create one with an initial state (and optiona
 public class GameManager : Node {
   private readonly Machine<IGameState> _machine;
 
-  // Expose the machine's event.
-  public event Machine<IGameState>.Changed OnChanged {
-    add => _machine.OnChanged += value;
-    remove => _machine.OnChanged -= value;
-  }
-
   public override void _Ready() {
-    _machine = new Machine<IGameState>(new GameMainMenuState(), onChanged);
+    _machine = new Machine<IGameState>(new GameMainMenuState(), OnChanged);
   }
 
   /// <summary>Starts the game.</summary>
@@ -157,81 +151,22 @@ public class AnObjectThatOnlyListensToAMachine {
 
 ## Notifiers
 
-A notifier is an object which emits a signal when its value changes. Notifiers are similar to state machines, but they don't care about transitions. Any update that changes the value (determined by comparing the new value with the previous value using `Object.Equals`) will emit a signal. It's often convenient to use record types as the value of a Notifier. Like state machines, the value of a notifier can never be `null` — make sure you initialize with a valid value!
+A notifier is an object which emits a signal when its value changes. Notifiers are similar to state machines, but they don't care about transitions. Any update that changes the value (determined by comparing the new value with the previous value using `Object.Equals`) will emit a signal. Like state machines, the value of a notifier can never be `null` — make sure you initialize with a valid value!
 
-Because notifiers check equality to determine changes, they are convenient to use with "value" types (like primitives, records, and structs). Notifiers, like state machines, also emit a signal to announce their value as soon as they are constructed.
+Using "value" types (primitive types, records, and structs) with a notifier is a natural fit since notifiers check equality to determine if the value has changed. Like state machines, notifiers also invoke an event to announce their value as soon as they are constructed.
 
 ```csharp
-private var _notifier
-  = new Notifier<string>("Player", OnPlayerNameChanged);
+var notifier = new Notifier<string>("Player", OnPlayerNameChanged);
+notifier.Update("Godot");
 
-private void OnPlayerNameChanged(string name) {
-  _log.Print($"Player name changed to $name");
+// Elsewhere...
+
+private void OnPlayerNameChanged(string name, string previous) {
+  _log.Print($"Player name changed from ${previous} to ${name}");
 }
 ```
 
-Like state machines, notifiers should typically be kept private. Instead of letting consumers modify the value directly, you can create game logic classes which provide the appropriate methods to mutate the notifier. Game logic classes can provide an event which redirects to the notifier event, or they can emit their own events when certain pieces of the notifier value changes.
-
-```csharp
-public record EnemyData(string Name, int Health);
-
-public class EnemyManager {
-  private readonly Notifier<EnemyData> _notifier;
-
-  public event Notifier<EnemyData>.Changed OnChanged {
-    add => _notifier.OnChanged += value;
-    remove => _notifier.OnChanged -= value;
-  }
-
-  public EnemyData Value => _notifier.Value;
-
-  public EnemyManager(string name, int health) => _notifier = new(
-    new EnemyData(name, health)
-  );
-
-  public void UpdateName(string name) =>
-    _notifier.Update(_notifier.Value with { Name = name });
-
-  public void UpdateHealth(int health) =>
-    _notifier.Update(_notifier.Value with { Health = health });
-}
-```
-
-The class above shows an enemy state class that emits an `OnChanged` event whenever any part of the enemy's state changes. You can easily modify it to emit more specific events when certain pieces of the enemy state changes.
-
-```csharp
-public class EnemyManager {
-  private readonly Notifier<EnemyData> _notifier;
-
-  public EnemyData Value => _notifier.Value;
-
-  public event Action<string>? OnNameChanged;
-  public event Action<int>? OnHealthChanged;
-
-  public EnemyManager(string name, int health) => _notifier = new(
-    new EnemyData(name, health),
-    OnChanged
-  );
-
-  public void UpdateName(string name) =>
-    _notifier.Update(_notifier.Value with { Name = name });
-
-  public void UpdateHealth(int health) =>
-    _notifier.Update(_notifier.Value with { Health = health });
-
-  private void OnChanged(EnemyData enemy, EnemyData? previous) {
-    // Emit different events depending on what changed.
-    if (!System.Object.Equals(enemy.Name, previous?.Name)) {
-      OnNameChanged?.Invoke(enemy.Name);
-    }
-    else if (!System.Object.Equals(enemy.Health, previous?.Health)) {
-      OnHealthChanged?.Invoke(enemy.Health);
-    }
-  }
-}
-```
-
-By providing classes which wrap state machines or notifiers to dependent nodes, you can create nodes which easily respond to changes in the values provided by distant ancestor nodes. To easily provide dependencies to distant child nodes, check out [go_dot_dep].
+> To easily inject dependencies to descendent nodes, check out [go_dot_dep].
 
 ### Read-only Notifiers
 

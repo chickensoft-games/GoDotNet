@@ -14,7 +14,7 @@
     <Company>Chickensoft</Company>
 
     <PackageId>Chickensoft.GoDotNet</PackageId>
-    <PackageVersion>1.2.0-beta8</PackageVersion>
+    <PackageVersion>1.3.0-beta8</PackageVersion>
     <PackageReleaseNotes>GoDotNet release.</PackageReleaseNotes>
     <PackageIcon></PackageIcon>
     <PackageTags>Godot;State Machine;Deterministic;Finite;FSM;Extensions;Notifier;Listener;Observable;Chickensoft;Gamedev;Utility;Utilities</PackageTags>
