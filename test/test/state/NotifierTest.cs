@@ -11,6 +11,7 @@ public class NotifierTest : TestClass {
   public void Instantiates() {
     var notifier = new Notifier<string>("a");
     notifier.Value.ShouldBe("a");
+    notifier.Previous.ShouldBeNull();
   }
 
   [Test]
@@ -24,6 +25,7 @@ public class NotifierTest : TestClass {
     var notifier = new Notifier<string>("a", OnChanged);
     called.ShouldBeTrue();
     notifier.Value.ShouldBe("a");
+    notifier.Previous.ShouldBeNull();
   }
 
   [Test]
@@ -34,20 +36,30 @@ public class NotifierTest : TestClass {
     notifier.OnChanged += OnChanged;
     notifier.Update("a");
     called.ShouldBeFalse();
+    notifier.Previous.ShouldBeNull();
   }
 
   [Test]
   public void UpdatesValue() {
     var notifier = new Notifier<string>("a");
-    var called = false;
+    var calledOnChanged = false;
+    var calledOnUpdated = false;
     void OnChanged(string value, string? previous) {
-      called = true;
+      calledOnChanged = true;
       value.ShouldBe("b");
       previous.ShouldBe("a");
+      notifier.Previous.ShouldBe("a");
+    }
+    void OnUpdated(string value) {
+      calledOnUpdated = true;
+      value.ShouldBe("b");
+      notifier.Previous.ShouldBe("a");
     }
     notifier.OnChanged += OnChanged;
+    notifier.OnUpdated += OnUpdated;
     notifier.Update("b");
-    called.ShouldBeTrue();
+    calledOnChanged.ShouldBeTrue();
+    calledOnUpdated.ShouldBeTrue();
   }
 
 }

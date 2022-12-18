@@ -147,5 +147,12 @@ public sealed class Machine<TState> : IReadOnlyMachine<TState>
     IsBusy = false;
   }
 
-  private void Announce() => OnChanged?.Invoke(State);
+  /// <summary>
+  /// Announces the current state to any listeners.
+  /// <see cref="Update"/> calls this automatically if the new state is
+  /// different from the previous state.
+  /// <br />
+  /// Call this whenever you want to force a re-announcement.
+  /// </summary>
+  public void Announce() => OnChanged?.Invoke(State);
 }

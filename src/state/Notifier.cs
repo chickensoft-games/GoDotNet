@@ -7,18 +7,31 @@ using System;
 /// </summary>
 public interface IReadOnlyNotifier<TData> {
   /// <summary>
-  /// Signature of the event handler for when the value changes. The notifier
-  /// and the previous event are passed in as arguments to make comparing
-  /// state changes simpler.
+  /// Signature of the event handler for when the value changes. The current
+  /// and previous values are provided to allow listeners to react to changes.
   /// </summary>
-  /// <param name="current">The new value.</param>
-  /// <param name="previous">The previous value.</param>
+  /// <param name="current">Current value of the notifier.</param>
+  /// <param name="previous">Previous value of the notifier.</param>
   delegate void Changed(TData current, TData? previous);
 
   /// <summary>
-  /// Event emitted when the current notifier value has changed.
+  /// Signature of the event handler for when the value changes.
+  /// </summary>
+  /// <param name="value">Current value of the notifier.</param>
+  delegate void Updated(TData value);
+
+  /// <summary>
+  /// Event emitted when the current value of the notifier has changed.
+  /// Event listeners will receive both the current and previous values.
   /// </summary>
   event Changed? OnChanged;
+
+  /// <summary>
+  /// Event emitted when the current value of the notifier has changed.
+  /// Event listeners will receive only the current value. Subscribe to
+  /// <see cref="OnChanged"/> if you need both the current and previous values.
+  /// </summary>
+  event Updated? OnUpdated;
 
   /// <summary>Current notifier value.</summary>
   TData Value { get; }
@@ -42,14 +55,24 @@ public sealed class Notifier<TData> : IReadOnlyNotifier<TData> {
   ) {
     if (onChanged != null) { OnChanged += onChanged; }
     Value = initialValue;
-    Announce(default);
+    Previous = default;
+    Announce();
   }
+
+  /// <summary>
+  /// Previous value of the notifier, if any. This is `default` when the
+  /// notifier has just been created.
+  /// </summary>
+  public TData? Previous { get; private set; }
 
   /// <inheritdoc/>
   public TData Value { get; private set; }
 
   /// <inheritdoc/>
   public event IReadOnlyNotifier<TData>.Changed? OnChanged;
+
+  /// <inheritdoc/>
+  public event IReadOnlyNotifier<TData>.Updated? OnUpdated;
 
   /// <summary>
   /// Updates the notifier value. Any listeners will be called with the
@@ -58,14 +81,21 @@ public sealed class Notifier<TData> : IReadOnlyNotifier<TData> {
   /// </summary>
   /// <param name="value">New value of the notifier.</param>
   public void Update(TData value) {
-    var hasChanged = !Object.Equals(Value, value);
-    var previous = Value;
+    if (Object.Equals(Value, value)) { return; }
+    Previous = Value;
     Value = value;
-    if (hasChanged) {
-      Announce(previous);
-    }
+    Announce();
   }
 
-  private void Announce(TData? previous)
-    => OnChanged?.Invoke(Value, previous);
+  /// <summary>
+  /// Announces the current and previous values to any listeners.
+  /// <see cref="Update"/> calls this automatically if the new value is
+  /// different from the previous value.
+  /// <br />
+  /// Call this whenever you want to force a re-announcement.
+  /// </summary>
+  public void Announce() {
+    OnChanged?.Invoke(Value, Previous);
+    OnUpdated?.Invoke(Value);
+  }
 }
