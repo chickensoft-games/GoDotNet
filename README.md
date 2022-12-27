@@ -231,6 +231,31 @@ private void MyOnChangedHandler(Type1 value1, Type2 value2) {
 }
 ```
 
+## Random Number Generator
+
+GoDotNet includes a testable convenience wrapper for `System.Random`.
+
+```csharp
+public partial class MyNode : Node {
+  public IRng Random { get; set; } = new Rng();
+
+  public override void _Ready() {
+    int i = Rng.NextInt(); // 0 (inclusive) to int.MaxValue (exclusive)
+    float f = Rng.NextFloat(); // 0 (inclusive) to 1 (exclusive)
+    double d = Rng.NextDouble(); // 0 (inclusive) to 1 (exclusive)
+
+    // 0 (inclusive) to 25 (exclusive)
+    int ir = Rng.RangeInt(0, 25);
+
+    // 0.0f (inclusive) to 25.0f (exclusive)
+    float fr = Rng.RangeFloat(0f, 25f); 
+
+    // 0.0d (inclusive) to 25.0d (exclusive)
+    double dr = Rng.RangeDouble(0d, 25d); 
+  }
+}
+```
+
 <!-- References -->
 
 <!-- <Badges> -->
