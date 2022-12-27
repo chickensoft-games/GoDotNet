@@ -56,7 +56,9 @@ public interface IRng {
 /// Random number generator default implementation.
 /// </summary>
 public record Rng : IRng {
+  /// <inheritdoc/>
   public int Seed { get; init; }
+  /// <inheritdoc/>
   public System.Random Generator { get; private set; }
 
   /// <summary>
