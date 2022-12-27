@@ -30,7 +30,7 @@ Internally, GoDotNet uses [GoDotLog] for logging. GoDotLog allows you to easily 
 
 An autoload can be fetched easily from any node. Once an autoload is found on the root child, GoDotNet caches it's type, allowing it to be looked up instantaneously without calling into Godot. 
 
-```csharp
+```cs
 public class MyEntity : Node {
   private MyAutoloadType _myAutoload => this.Autoload<MyAutoloadType>();
 
@@ -47,7 +47,7 @@ A `Scheduler` node is included which allows callbacks to be run on the next fram
 
 Create a new autoload which extends the scheduler:
 
-```csharp
+```cs
 using GoDotNet;
 
 public class GameScheduler : Scheduler { }
@@ -63,7 +63,7 @@ GameScheduler="*res://autoload_folder/GameScheduler.cs"
 
 ...and simply schedule a callback to run on the next frame:
 
-```csharp
+```cs
 this.Autoload<Scheduler>().NextFrame(
   () => _log.Print("I won't execute until the next frame.")
 )
@@ -79,7 +79,7 @@ States used with a state machine must implement `IMachineState<T>`, where T is j
 
 To create states for use with a machine, create an interface which implements `IMachineState<IYourInterface>`. Then, create record types for each state which implement your interface, optionally overriding `CanTransitionTo` for any states which only allow transitions to specific states.
 
-```csharp
+```cs
 public interface IGameState : IMachineState<IGameState> { }
 
 public record GameMainMenuState : IGameState {
@@ -98,13 +98,13 @@ public record GamePlayingState(string PlayerName) {
 
 Simply omit implementing `CanTransitionTo` for any states which should allow transitions to any other state.
 
-```csharp
+```cs
 public interface GameSuspended : IGameState { }
 ```
 
 Machines are fairly simple to use: create one with an initial state (and optionally register a machine state change event handler). A state machine will announce the state has changed as soon as it is constructed.
 
-```csharp
+```cs
 public class GameManager : Node {
   private readonly Machine<IGameState> _machine;
 
@@ -140,7 +140,7 @@ public class GameManager : Node {
 
 If you want another object to only be able to read the current state of a state machine and subscribe to changes, but not be able to update the state of the machine, you can expose the machine as an `IReadOnlyMachine<TState>` instead of as a `Machine<TState>`.
 
-```csharp
+```cs
 public class AnObjectThatOnlyListensToAMachine {
   public IReadOnlyMachine<string> Machine { get; set; }
 
@@ -155,7 +155,7 @@ A notifier is an object which emits a signal when its value changes. Notifiers a
 
 Using "value" types (primitive types, records, and structs) with a notifier is a natural fit since notifiers check equality to determine if the value has changed. Like state machines, notifiers also invoke an event to announce their value as soon as they are constructed.
 
-```csharp
+```cs
 var notifier = new Notifier<string>("Player", OnPlayerNameChanged);
 notifier.Update("Godot");
 
@@ -172,7 +172,7 @@ private void OnPlayerNameChanged(string name, string previous) {
 
 As with state machines, a notifiers can be referenced as an `IReadOnlyNotifier<TValue>` to prevent objects using them from causing unwanted changes. The object(s) that own the notifier can reference it as a `Notifier<TValue>` and mutate it accordingly, while the listener objects can simply reference it as an `IReadOnlyNotifier<TValue>`.
 
-```csharp
+```cs
 public class AnObjectThatOnlyListensToANotifier {
   public IReadOnlyNotifier<string> Notifier { get; set; }
 
@@ -187,7 +187,7 @@ Godot supports emitting [signals] from C#. Because Godot signals pass through th
 
 It's not possible to have static typing with signal parameters, so you don't find out until runtime if you accidentally passed the wrong parameter. The closest you can do is the following, which wouldn't break at compile time if the receiving function signature happened to be wrong.
 
-```csharp
+```cs
 public class ObjectType {
   [Signal]
   public delegate void DoSomething(string value); 
@@ -211,7 +211,7 @@ public class MyNode : Node {
 
 Because of these limitations, GoDotNet will avoid Godot signals except when necessary to interact with Godot components. For communication between C# game logic, it will typically be preferable to use C# events instead.
 
-```csharp
+```cs
 // Declare an event signature — no [Signal] attribute necessary.
 public delegate void Changed(Type1 value1, Type2 value2);
 
@@ -235,7 +235,7 @@ private void MyOnChangedHandler(Type1 value1, Type2 value2) {
 
 GoDotNet includes a testable convenience wrapper for `System.Random`.
 
-```csharp
+```cs
 public partial class MyNode : Node {
   public IRng Random { get; set; } = new Rng();
 
