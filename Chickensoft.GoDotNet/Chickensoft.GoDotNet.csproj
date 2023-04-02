@@ -12,7 +12,7 @@
     <DebugType>portable</DebugType>
 
     <Title>Chickensoft.GoDotNet</Title>
-    <Version>1.4.1</Version>
+    <Version>1.5.0</Version>
     <Description>State machines, notifiers, and other utilities for C# Godot development.</Description>
     <Copyright>© 2023 Chickensoft</Copyright>
     <Authors>Chickensoft</Authors>
