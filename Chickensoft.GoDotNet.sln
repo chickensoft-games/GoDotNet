@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chickensoft.GoDotNet", "Chickensoft.GoDotNet\Chickensoft.GoDotNet.csproj", "{FD2D0482-115D-4B55-A95A-5DF468BF19D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chickensoft.GoDotNet.Tests", "Chickensoft.GoDotNet.Tests\Chickensoft.GoDotNet.Tests.csproj", "{73F2185F-1EB8-4817-BCCD-A3887844109D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FD2D0482-115D-4B55-A95A-5DF468BF19D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD2D0482-115D-4B55-A95A-5DF468BF19D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD2D0482-115D-4B55-A95A-5DF468BF19D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD2D0482-115D-4B55-A95A-5DF468BF19D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73F2185F-1EB8-4817-BCCD-A3887844109D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73F2185F-1EB8-4817-BCCD-A3887844109D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73F2185F-1EB8-4817-BCCD-A3887844109D}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{73F2185F-1EB8-4817-BCCD-A3887844109D}.Release|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+EndGlobal

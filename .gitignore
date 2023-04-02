@@ -1,0 +1,11 @@
+Chickensoft.GoDotNet/nupkg/
+
+Chickensoft.GoDotNet.Tests/coverage/*
+!Chickensoft.GoDotNet.Tests/coverage/.gdignore
+
+.godot/
+bin/
+obj/
+.generated/
+.vs/
+.DS_Store
