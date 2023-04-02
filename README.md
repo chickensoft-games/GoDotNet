@@ -1,8 +1,14 @@
-# GoDotNet
+# Chickensoft.GoDotNet
 
-[![Chickensoft][chickensoft-badge]][chickensoft-website] [![Discord][discord-badge]][discord] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
+[![Chickensoft Badge][chickensoft-badge]][chickensoft-website] [![Discord][discord-badge]][discord] [![Read the docs][read-the-docs-badge]][docs] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
 
 State machines, notifiers, and other utilities for C# Godot development.
+
+---
+
+<p align="center">
+<img alt="Chickensoft.GoDotNet" src="Chickensoft.GoDotNet/icon.png" width="200">
+</p>
 
 > 🚨 Looking for node-based dependency injection with providers and dependents? That functionality has been moved to it's own package, [GoDotDep][go_dot_dep]!
 
@@ -28,9 +34,9 @@ Internally, GoDotNet uses [GoDotLog] for logging. GoDotLog allows you to easily 
 
 ## Autoloads
 
-An autoload can be fetched easily from any node. Once an autoload is found on the root child, GoDotNet caches it's type, allowing it to be looked up instantaneously without calling into Godot. 
+An autoload can be fetched easily from any node. Once an autoload is found on the root child, GoDotNet caches it's type, allowing it to be looked up instantaneously without calling into Godot.
 
-```cs
+```csharp
 public class MyEntity : Node {
   private MyAutoloadType _myAutoload => this.Autoload<MyAutoloadType>();
 
@@ -47,7 +53,7 @@ A `Scheduler` node is included which allows callbacks to be run on the next fram
 
 Create a new autoload which extends the scheduler:
 
-```cs
+```csharp
 using GoDotNet;
 
 public class GameScheduler : Scheduler { }
@@ -63,7 +69,7 @@ GameScheduler="*res://autoload_folder/GameScheduler.cs"
 
 ...and simply schedule a callback to run on the next frame:
 
-```cs
+```csharp
 this.Autoload<Scheduler>().NextFrame(
   () => _log.Print("I won't execute until the next frame.")
 )
@@ -73,13 +79,13 @@ this.Autoload<Scheduler>().NextFrame(
 
 GoDotNet provides a simple state machine implementation that emits a C# event when the state changes (since [Godot signals are more fragile](#signals-and-events)). If you try to update the machine to a state that isn't a valid transition from the current state, it throws an exception. The machine requires an initial state to avoid nullability issues during construction.
 
-State machines are not extensible — instead, GoDotNet almost always prefers the pattern of [composition over inheritance][composition-inheritance]. The state machine relies on state equality to determine if the state has changed to avoid issuing unnecessary events. Using `record` or other value types for the state makes equality checking work automatically for free. 
+State machines are not extensible — instead, GoDotNet almost always prefers the pattern of [composition over inheritance][composition-inheritance]. The state machine relies on state equality to determine if the state has changed to avoid issuing unnecessary events. Using `record` or other value types for the state makes equality checking work automatically for free.
 
 States used with a state machine must implement `IMachineState<T>`, where T is just the type of the machine state. Your machine states can optionally implement the method `CanTransitionTo(IMachineState state)`, which should return true if the given "next state" is a valid transition. Otherwise, the default implementation returns `true` to allow transitions to any state.
 
 To create states for use with a machine, create an interface which implements `IMachineState<IYourInterface>`. Then, create record types for each state which implement your interface, optionally overriding `CanTransitionTo` for any states which only allow transitions to specific states.
 
-```cs
+```csharp
 public interface IGameState : IMachineState<IGameState> { }
 
 public record GameMainMenuState : IGameState {
@@ -98,13 +104,13 @@ public record GamePlayingState(string PlayerName) {
 
 Simply omit implementing `CanTransitionTo` for any states which should allow transitions to any other state.
 
-```cs
+```csharp
 public interface GameSuspended : IGameState { }
 ```
 
 Machines are fairly simple to use: create one with an initial state (and optionally register a machine state change event handler). A state machine will announce the state has changed as soon as it is constructed.
 
-```cs
+```csharp
 public class GameManager : Node {
   private readonly Machine<IGameState> _machine;
 
@@ -140,7 +146,7 @@ public class GameManager : Node {
 
 If you want another object to only be able to read the current state of a state machine and subscribe to changes, but not be able to update the state of the machine, you can expose the machine as an `IReadOnlyMachine<TState>` instead of as a `Machine<TState>`.
 
-```cs
+```csharp
 public class AnObjectThatOnlyListensToAMachine {
   public IReadOnlyMachine<string> Machine { get; set; }
 
@@ -155,7 +161,7 @@ A notifier is an object which emits a signal when its value changes. Notifiers a
 
 Using "value" types (primitive types, records, and structs) with a notifier is a natural fit since notifiers check equality to determine if the value has changed. Like state machines, notifiers also invoke an event to announce their value as soon as they are constructed.
 
-```cs
+```csharp
 var notifier = new Notifier<string>("Player", OnPlayerNameChanged);
 notifier.Update("Godot");
 
@@ -172,7 +178,7 @@ private void OnPlayerNameChanged(string name, string previous) {
 
 As with state machines, a notifiers can be referenced as an `IReadOnlyNotifier<TValue>` to prevent objects using them from causing unwanted changes. The object(s) that own the notifier can reference it as a `Notifier<TValue>` and mutate it accordingly, while the listener objects can simply reference it as an `IReadOnlyNotifier<TValue>`.
 
-```cs
+```csharp
 public class AnObjectThatOnlyListensToANotifier {
   public IReadOnlyNotifier<string> Notifier { get; set; }
 
@@ -187,7 +193,7 @@ Godot supports emitting [signals] from C#. Because Godot signals pass through th
 
 It's not possible to have static typing with signal parameters, so you don't find out until runtime if you accidentally passed the wrong parameter. The closest you can do is the following, which wouldn't break at compile time if the receiving function signature happened to be wrong.
 
-```cs
+```csharp
 public class ObjectType {
   [Signal]
   public delegate void DoSomething(string value); 
@@ -211,7 +217,7 @@ public class MyNode : Node {
 
 Because of these limitations, GoDotNet will avoid Godot signals except when necessary to interact with Godot components. For communication between C# game logic, it will typically be preferable to use C# events instead.
 
-```cs
+```csharp
 // Declare an event signature — no [Signal] attribute necessary.
 public delegate void Changed(Type1 value1, Type2 value2);
 
@@ -235,7 +241,7 @@ private void MyOnChangedHandler(Type1 value1, Type2 value2) {
 
 GoDotNet includes a testable convenience wrapper for `System.Random`.
 
-```cs
+```csharp
 public partial class MyNode : Node {
   public IRng Random { get; set; } = new Rng();
 
@@ -256,23 +262,26 @@ public partial class MyNode : Node {
 }
 ```
 
-<!-- References -->
+---
 
-<!-- <Badges> -->
-[chickensoft-badge]: https://chickensoft.games/images/chickensoft/chickensoft_badge.svg
+🐣 Package generated from a 🐤 Chickensoft Template — <https://chickensoft.games>
+
+<!-- Links -->
+
+<!-- Header -->
+[chickensoft-badge]: https://raw.githubusercontent.com/chickensoft-games/chickensoft_site/main/static/img/badges/chickensoft_badge.svg
 [chickensoft-website]: https://chickensoft.games
+[discord-badge]: https://raw.githubusercontent.com/chickensoft-games/chickensoft_site/main/static/img/badges/discord_badge.svg
 [discord]: https://discord.gg/gSjaPgMmYW
-[discord-badge]: https://img.shields.io/badge/Chickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white
-[line-coverage]: https://raw.githubusercontent.com/chickensoft-games/go_dot_net/main/test/reports/line_coverage.svg
-[branch-coverage]: https://raw.githubusercontent.com/chickensoft-games/go_dot_net/main/test/reports/branch_coverage.svg
-<!-- </Badges> -->
+[read-the-docs-badge]: https://raw.githubusercontent.com/chickensoft-games/chickensoft_site/main/static/img/badges/read_the_docs_badge.svg
+[docs]: https://chickensoft.games/docsickensoft%20Discord-%237289DA.svg?style=flat&logo=discord&logoColor=white
+[line-coverage]: Chickensoft.GoDotNet.Tests/badges/line_coverage.svg
+[branch-coverage]: Chickensoft.GoDotNet.Tests/badges/branch_coverage.svg
 
+<!-- Article -->
 [go_dot_dep]: https://github.com/chickensoft-games/go_dot_dep
-[net-5-0]: https://github.com/godotengine/godot/issues/43458#issuecomment-725550284
 [go_dot_net_nuget]: https://www.nuget.org/packages/Chickensoft.GoDotNet/
 [GoDotLog]: https://github.com/chickensoft-games/go_dot_log
-[godot-dictionary-iterable-issue]: https://github.com/godotengine/godot/issues/56733
 [call-deferred]: https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-call-deferred
 [signals]: https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_features.html#c-signals
 [composition-inheritance]: https://en.wikipedia.org/wiki/Composition_over_inheritance
-[export-default-values]: https://github.com/godotengine/godot/issues/37703#issuecomment-877406433
