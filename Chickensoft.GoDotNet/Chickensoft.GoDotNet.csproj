@@ -13,7 +13,7 @@
 
     <Title>Chickensoft.GoDotNet</Title>
     <Version>1.4.1</Version>
-    <Description />
+    <Description>State machines, notifiers, and other utilities for C# Godot development.</Description>
     <Copyright>© 2023 Chickensoft</Copyright>
     <Authors>Chickensoft</Authors>
     <Company>Chickensoft</Company>
@@ -21,13 +21,13 @@
     <PackageId>Chickensoft.GoDotNet</PackageId>
     <PackageReleaseNotes>Chickensoft.GoDotNet release.</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageTags />
+    <PackageTags>Godot;State Machine;Deterministic;Finite;FSM;Extensions;Notifier;Listener;Observable;Chickensoft;Gamedev;Utility;Utilities</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageProjectUrl></PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/chickensoft-games/GoDotNet</PackageProjectUrl>
 
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl></RepositoryUrl>
+    <RepositoryUrl>https://github.com/chickensoft-games/GoDotNet</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -40,5 +40,10 @@
     <!-- Dependencies go here. -->
     <PackageReference Include="GodotSharp" Version="4.0.2-rc.1" />
     <PackageReference Include="Chickensoft.GoDotLog" Version="1.1.1-godot4.0.2-rc.1" />
+    <!-- Required for inheritdoc -->
+    <PackageReference Include="SauceControl.InheritDoc" Version="1.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>
