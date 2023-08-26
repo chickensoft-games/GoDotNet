@@ -2,6 +2,14 @@
 
 [![Chickensoft Badge][chickensoft-badge]][chickensoft-website] [![Discord][discord-badge]][discord] [![Read the docs][read-the-docs-badge]][docs] ![line coverage][line-coverage] ![branch coverage][branch-coverage]
 
+> ⛔️🧨💥 **This package is no longer maintained and has been superseded by other projects.**
+>
+> For better alternatives to the tools provided here, please see the following:
+>
+> - State machines — use [LogicBlocks].
+> - Notifiers - use C#'s [BehaviorSubject] from the [Reactive Extensions].
+> - Scheduler - use [Godot's built-in call_deferred mechanism][call-deferred].
+
 State machines, notifiers, and other utilities for C# Godot development.
 
 ---
@@ -285,3 +293,6 @@ public partial class MyNode : Node {
 [call-deferred]: https://docs.godotengine.org/en/stable/classes/class_object.html#class-object-method-call-deferred
 [signals]: https://docs.godotengine.org/en/stable/tutorials/scripting/c_sharp/c_sharp_features.html#c-signals
 [composition-inheritance]: https://en.wikipedia.org/wiki/Composition_over_inheritance
+[LogicBlocks]: https://github.com/chickensoft-games/LogicBlocks
+[BehaviorSubject]: https://learn.microsoft.com/en-us/previous-versions/dotnet/reactive-extensions/hh211949
+[Reactive Extensions]: https://www.nuget.org/packages/System.Reactive/
